@@ -1,0 +1,146 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table product {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  product_name varchar
+  description varchar
+  category_id varchar
+}
+
+Table product_attribute {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  attribute_name varchar
+}
+
+Table product_attribute_value {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  attribute_id varchar
+  value varchar
+}
+
+Table product_variance {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  product_id varchar
+  main_attribute_value_id varchar
+  sub_attribute_value_id varchar
+  quantity integer
+}
+
+Table product_image {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  product_variance_id integer
+  image_url varchar
+  image_type varchar
+}
+
+Table category {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  category_name varchar
+  parent_category_id varchar
+}
+
+Table product_price_history {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  product_variance_id integer
+}
+
+Table cart {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  user_id varchar
+}
+
+Table cart_item {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  cart_id varchar
+  product_variance_id varchar
+  quantity integer
+}
+
+Table user {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  username varchar
+  password varchar
+}
+
+Table user_info {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  user_id varchar
+  firstName varchar
+  lastName varchar
+  email varchar
+  phone varchar
+  avatar varchar
+}
+
+Table user_shipping_info {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  user_id varchar
+  country varchar
+  city varchar
+  district varchar
+  streetName varchar
+  addressNumber varchar
+  phone varchar
+  firstName varchar
+  lastName varchar
+}
+
+Table order {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  user_id varchar
+  status varchar
+}
+
+Table order_item {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  order_id varchar
+  product_variance_id varchar
+  quantity integer
+}
+
+
+Ref: product_variance.main_attribute_value_id > product_attribute_value.id  
+Ref: product_variance.sub_attribute_value_id > product_attribute_value.id 
+Ref: product_variance.product_id > product.id
+Ref: product_attribute_value.attribute_id > product_attribute.id
+Ref: category.parent_category_id > category.id
+Ref: product.category_id > category.id
+Ref: product_price_history.product_variance_id > product_variance.id
+Ref: product_image.product_variance_id > product_variance.id
+Ref: cart.user_id > user.id
+Ref: cart_item.cart_id > cart.id
+Ref: cart_item.product_variance_id > product_variance.id
+Ref: order.user_id > user.id
+Ref: order_item.order_id > order.id
+Ref: order_item.product_variance_id > product_variance.id
+Ref: user_info.user_id > user.id
+Ref: user_shipping_info.user_id > user.id
