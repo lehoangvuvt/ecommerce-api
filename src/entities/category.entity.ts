@@ -13,6 +13,10 @@ class Category extends CustomBase {
   category_name: string
 
   @ApiProperty()
+  @Column('varchar', { nullable: true })
+  parent_category_id: string
+
+  @ApiProperty()
   @ManyToOne(() => Category, (category) => category.categories)
   @JoinColumn({ name: 'parent_category_id' })
   parentCategory: Category

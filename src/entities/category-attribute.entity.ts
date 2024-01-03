@@ -6,9 +6,6 @@ import ProductCategoryAttributeValue from './product-category-attribute-value.en
 @Entity()
 class CategoryAttribute extends CustomBase {
   @Column({ unique: true, type: 'varchar', nullable: false })
-  name: string
-
-  @Column({ unique: true, type: 'varchar', nullable: false })
   attribute_name: string
 
   @OneToMany(() => CategoryAttributeMapping, (categoryAttributeMapping) => categoryAttributeMapping.attributeCategoryMapping)
