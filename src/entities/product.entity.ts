@@ -4,6 +4,7 @@ import Category from './category.entity'
 import ProductVariance from './product-variance.entity'
 import Brand from './brand.entity'
 import ProductImage from './product-image.entity'
+import ProductCategoryAttributeValue from './product-category-attribute-value.entity'
 
 @Entity()
 class Product extends CustomBase {
@@ -26,6 +27,9 @@ class Product extends CustomBase {
 
   @OneToMany(() => ProductImage, (productImage) => productImage.product)
   images: ProductImage[]
+
+  @OneToMany(() => ProductCategoryAttributeValue, (productCategoryAttributeValue) => productCategoryAttributeValue.product)
+  productCategoryAttributeValues: ProductCategoryAttributeValue[]
 }
 
 export default Product

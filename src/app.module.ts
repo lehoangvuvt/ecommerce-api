@@ -26,6 +26,7 @@ import CategoryAttribute from './entities/category-attribute.entity'
 import CategoryAttributeValue from './entities/category-attribute-value.entity'
 import CategoryAttributeMapping from './entities/category-attribute-mapping.entity'
 import CategoryBrand from './entities/category-brand.entity'
+import ProductCategoryAttributeValue from './entities/product-category-attribute-value.entity'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -55,6 +56,7 @@ import CategoryBrand from './entities/category-brand.entity'
         ProductVariance,
         ProductVarianceImage,
         ProductPriceHistory,
+        ProductCategoryAttributeValue,
         Cart,
         CartItem,
       ],

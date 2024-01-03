@@ -36,6 +36,15 @@ Table product_attribute_value {
   value varchar
 }
 
+Table product_category_attribute_value {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  category_attribute_id varchar
+  product_id varchar
+  value varchar
+}
+
 Table product_variance {
   id varchar [PK]
   createdAt datetime
@@ -203,3 +212,5 @@ Ref: category_brand.brand_id > brand.id
 Ref: category_attribute_value.attribute_id > category_attribute.id
 Ref: category_attribute_mapping.attribute_id > category_attribute.id
 Ref: category_attribute_mapping.category_id > category.id
+Ref: product_category_attribute_value.category_attribute_id > category_attribute.id
+Ref: product_category_attribute_value.product_id > product.id
