@@ -8,6 +8,7 @@ Table product {
   product_name varchar
   description varchar
   category_id varchar
+  brand_id varchar
 }
 
 Table product_attribute {
@@ -57,6 +58,7 @@ Table product_price_history {
   createdAt datetime
   updatedAt datetime
   product_variance_id integer
+  price decimal(10,2)
 }
 
 Table cart {
@@ -108,6 +110,8 @@ Table user_shipping_info {
   phone varchar
   firstName varchar
   lastName varchar
+  primary boolean
+  type integer
 }
 
 Table order {
@@ -115,7 +119,7 @@ Table order {
   createdAt datetime
   updatedAt datetime
   user_id varchar
-  status varchar
+  status integer
 }
 
 Table order_item {
@@ -127,6 +131,13 @@ Table order_item {
   quantity integer
 }
 
+Table brand {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  brand_name varchar
+} 
+
 
 Ref: product_variance.main_attribute_value_id > product_attribute_value.id  
 Ref: product_variance.sub_attribute_value_id > product_attribute_value.id 
@@ -136,11 +147,12 @@ Ref: category.parent_category_id > category.id
 Ref: product.category_id > category.id
 Ref: product_price_history.product_variance_id > product_variance.id
 Ref: product_image.product_variance_id > product_variance.id
-Ref: cart.user_id > user.id
+Ref: cart.user_id - user.id
 Ref: cart_item.cart_id > cart.id
 Ref: cart_item.product_variance_id > product_variance.id
 Ref: order.user_id > user.id
 Ref: order_item.order_id > order.id
 Ref: order_item.product_variance_id > product_variance.id
-Ref: user_info.user_id > user.id
+Ref: user_info.user_id - user.id
 Ref: user_shipping_info.user_id > user.id
+Ref: product.brand_id > brand.id
