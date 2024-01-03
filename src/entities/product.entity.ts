@@ -3,6 +3,7 @@ import CustomBase from './base'
 import Category from './category.entity'
 import ProductVariance from './product-variance.entity'
 import Brand from './brand.entity'
+import ProductImage from './product-image.entity'
 
 @Entity()
 class Product extends CustomBase {
@@ -22,6 +23,9 @@ class Product extends CustomBase {
   @ManyToOne(() => Brand, (brand) => brand.products)
   @JoinColumn({ name: 'brand_id' })
   brand: Brand
+
+  @OneToMany(() => ProductImage, (productImage) => productImage.product)
+  images: ProductImage[]
 }
 
 export default Product

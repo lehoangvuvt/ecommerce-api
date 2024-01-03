@@ -1,4 +1,4 @@
-import { Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm'
+import { Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm'
 import CustomBase from './base'
 import User from './user.entity'
 import CartItem from './cart-item.entity'

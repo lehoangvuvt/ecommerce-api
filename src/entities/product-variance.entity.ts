@@ -2,10 +2,11 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import ProductAttributeValue from './product-attribute-value.entity'
 import Product from './product.entity'
-import ProductImage from './product-image.entity'
+import ProductImage from './product-variance-image.entity'
 import ProductPriceHistory from './product-price-history.entity'
 import CartItem from './cart-item.entity'
 import OrderItem from './order-item.entity'
+import ProductVarianceImage from './product-variance-image.entity'
 
 @Entity()
 class ProductVariance extends CustomBase {
@@ -34,7 +35,7 @@ class ProductVariance extends CustomBase {
   productImages: ProductImage[]
 
   @OneToMany(() => ProductPriceHistory, (productPriceHistory) => productPriceHistory.productVariance)
-  productPriceHistories: ProductImage[]
+  productPriceHistories: ProductVarianceImage[]
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.productVariance)
   cartItems: CartItem[]

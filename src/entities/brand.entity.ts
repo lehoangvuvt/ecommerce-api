@@ -1,8 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm'
 import CustomBase from './base'
-import Cart from './cart.entity'
-import UserShippingInfo from './user-shipping-info.entity'
 import Product from './product.entity'
+import CategoryBrand from './category-brand.entity'
 
 @Entity()
 class Brand extends CustomBase {
@@ -11,6 +10,9 @@ class Brand extends CustomBase {
 
   @OneToMany(() => Product, (product) => product.brand)
   products: Product[]
+
+  @OneToMany(() => CategoryBrand, (categoryBrand) => categoryBrand.category)
+  brandCategories: CategoryBrand[]
 }
 
 export default Brand

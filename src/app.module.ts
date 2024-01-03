@@ -11,7 +11,6 @@ import ProductAttribute from './entities/product-attribute.entity'
 import ProductAttributeValue from './entities/product-attribute-value.entity'
 import Category from './entities/category.entity'
 import ProductVariance from './entities/product-variance.entity'
-import ProductImage from './entities/product-image.entity'
 import ProductPriceHistory from './entities/product-price-history.entity'
 import Cart from './entities/cart.entity'
 import CartItem from './entities/cart-item.entity'
@@ -20,6 +19,13 @@ import UserInfo from './entities/user-info.entity'
 import Order from './entities/order.entity'
 import OrderItem from './entities/order-item.entity'
 import Brand from './entities/brand.entity'
+import { CategoryModule } from './modules/category/category.module'
+import ProductVarianceImage from './entities/product-variance-image.entity'
+import ProductImage from './entities/product-image.entity'
+import CategoryAttribute from './entities/category-attribute.entity'
+import CategoryAttributeValue from './entities/category-attribute-value.entity'
+import CategoryAttributeMapping from './entities/category-attribute-mapping.entity'
+import CategoryBrand from './entities/category-brand.entity'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -36,13 +42,18 @@ import Brand from './entities/brand.entity'
         UserShippingInfo,
         Order,
         OrderItem,
-        Product,
-        ProductAttribute,
         ProductAttributeValue,
         Brand,
         Category,
-        ProductVariance,
+        CategoryBrand,
+        CategoryAttribute,
+        CategoryAttributeValue,
+        CategoryAttributeMapping,
+        Product,
         ProductImage,
+        ProductAttribute,
+        ProductVariance,
+        ProductVarianceImage,
         ProductPriceHistory,
         Cart,
         CartItem,
@@ -51,6 +62,7 @@ import Brand from './entities/brand.entity'
     }),
     UserModule,
     ProductModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
