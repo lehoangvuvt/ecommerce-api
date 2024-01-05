@@ -1,12 +1,12 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
-import ProductAttributeValue from './product-attribute-value.entity'
 import Product from './product.entity'
 import ProductImage from './product-variance-image.entity'
 import ProductPriceHistory from './product-price-history.entity'
 import CartItem from './cart-item.entity'
 import OrderItem from './order-item.entity'
 import ProductVarianceImage from './product-variance-image.entity'
+import AttributeSet from './attribute-set.entity'
 
 @Entity()
 class ProductVariance extends CustomBase {
@@ -16,20 +16,15 @@ class ProductVariance extends CustomBase {
   @Column({ unique: true, type: 'varchar', nullable: false })
   attribute_name: string
 
+  @Column({ type: 'varchar', nullable: true })
+  attribute_set_id: string
+
   @Column({ type: 'int2', nullable: false, default: 0 })
   quantity: number
 
   @ManyToOne(() => Product, (product) => product.productVariances)
   @JoinColumn({ name: 'product_id' })
   product: Product
-
-  @ManyToOne(() => ProductAttributeValue, (productAttributeValue) => productAttributeValue.productVariances1)
-  @JoinColumn({ name: 'main_attribute_value_id' })
-  productAttributeValue1: ProductAttributeValue
-
-  @ManyToOne(() => ProductAttributeValue, (productAttributeValue) => productAttributeValue.productVariances2)
-  @JoinColumn({ name: 'sub_attribute_value_id' })
-  productAttributeValue2: ProductAttributeValue
 
   @OneToMany(() => ProductImage, (productImage) => productImage.productVariance)
   productImages: ProductImage[]
@@ -42,6 +37,10 @@ class ProductVariance extends CustomBase {
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.productVariance)
   orderItems: OrderItem[]
+
+  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.productVariances)
+  @JoinColumn({ name: 'attribute_set_id' })
+  attributeSet: AttributeSet
 }
 
 export default ProductVariance

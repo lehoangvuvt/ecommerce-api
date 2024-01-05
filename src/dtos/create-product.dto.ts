@@ -25,6 +25,22 @@ class CreateProductDTO {
   })
   @IsString()
   category_id: string
+
+  @ApiProperty({
+    description: "Brand's ID of product",
+    type: String,
+    required: true,
+  })
+  @IsString()
+  brand_id: string
+
+  @ApiProperty({
+    description: 'ID of attribute set assign to product',
+    type: String,
+    required: true,
+  })
+  @IsString()
+  attribute_set_id: string
 }
 
 export default CreateProductDTO

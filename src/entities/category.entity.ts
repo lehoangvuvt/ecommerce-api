@@ -2,9 +2,8 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import Product from './product.entity'
 import { ApiProperty } from '@nestjs/swagger'
-import CategoryAttributeMapping from './category-attribute-mapping.entity'
-import CategoryAttribute from './category-attribute.entity'
 import CategoryBrand from './category-brand.entity'
+import AttributeSet from './attribute-set.entity'
 
 @Entity()
 class Category extends CustomBase {
@@ -17,6 +16,10 @@ class Category extends CustomBase {
   parent_category_id: string
 
   @ApiProperty()
+  @Column({ type: 'varchar', nullable: true })
+  attribute_set_id: string
+
+  @ApiProperty()
   @ManyToOne(() => Category, (category) => category.categories)
   @JoinColumn({ name: 'parent_category_id' })
   parentCategory: Category
@@ -27,11 +30,12 @@ class Category extends CustomBase {
   @OneToMany(() => Product, (product) => product.category)
   products: Product[]
 
-  @OneToMany(() => CategoryAttributeMapping, (categoryAttributeMapping) => categoryAttributeMapping.categoryAttribubeMapping)
-  categoryAttributes: CategoryAttribute[]
-
-  @OneToMany(() => CategoryBrand, (categoryBrand) => categoryBrand.category)
+  @OneToMany(() => CategoryBrand, (categoryBrand) => categoryBrand.brand, { cascade: true })
   categoryBrands: CategoryBrand[]
+
+  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.categories)
+  @JoinColumn({ name: 'attribute_set_id' })
+  attributeSet: AttributeSet
 }
 
 export default Category

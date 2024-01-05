@@ -7,8 +7,6 @@ import User from './entities/user.entity'
 import { UserModule } from './modules/user/user.module'
 import { ProductModule } from './modules/product/product.module'
 import Product from './entities/product.entity'
-import ProductAttribute from './entities/product-attribute.entity'
-import ProductAttributeValue from './entities/product-attribute-value.entity'
 import Category from './entities/category.entity'
 import ProductVariance from './entities/product-variance.entity'
 import ProductPriceHistory from './entities/product-price-history.entity'
@@ -22,11 +20,15 @@ import Brand from './entities/brand.entity'
 import { CategoryModule } from './modules/category/category.module'
 import ProductVarianceImage from './entities/product-variance-image.entity'
 import ProductImage from './entities/product-image.entity'
-import CategoryAttribute from './entities/category-attribute.entity'
-import CategoryAttributeValue from './entities/category-attribute-value.entity'
-import CategoryAttributeMapping from './entities/category-attribute-mapping.entity'
 import CategoryBrand from './entities/category-brand.entity'
-import ProductCategoryAttributeValue from './entities/product-category-attribute-value.entity'
+import AttributeValue from './entities/attribute-value.entity'
+import Attribute from './entities/attribute.entity'
+import AttributeSet from './entities/attribute-set.entity'
+import AttributeSetValueMapping from './entities/attribute-set-value-mapping.entity'
+import { UploadedFilesModule } from './modules/upload-files/upload-files.module'
+import { BrandModule } from './modules/brand/brand.module'
+import { CategoryBrandModule } from './modules/category-brand/category-brand.module'
+import { AttributeModule } from './modules/attribute/attribute.module'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -43,20 +45,18 @@ import ProductCategoryAttributeValue from './entities/product-category-attribute
         UserShippingInfo,
         Order,
         OrderItem,
-        ProductAttributeValue,
+        Attribute,
+        AttributeValue,
+        AttributeSet,
+        AttributeSetValueMapping,
         Brand,
         Category,
         CategoryBrand,
-        CategoryAttribute,
-        CategoryAttributeValue,
-        CategoryAttributeMapping,
         Product,
         ProductImage,
-        ProductAttribute,
         ProductVariance,
         ProductVarianceImage,
         ProductPriceHistory,
-        ProductCategoryAttributeValue,
         Cart,
         CartItem,
       ],
@@ -65,6 +65,10 @@ import ProductCategoryAttributeValue from './entities/product-category-attribute
     UserModule,
     ProductModule,
     CategoryModule,
+    UploadedFilesModule,
+    BrandModule,
+    CategoryBrandModule,
+    AttributeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

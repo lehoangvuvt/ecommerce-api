@@ -14,11 +14,13 @@ export class ProductService {
     return result
   }
 
-  async createProduct(createProductDTO: CreateProductDTO, category: Category) {
+  async createProduct(createProductDTO: CreateProductDTO) {
+    const { brand_id, category_id, description, product_name } = createProductDTO
     const newProduct = this.productRepository.create({
-      product_name: createProductDTO.product_name,
-      description: createProductDTO.description,
-      category,
+      product_name,
+      description,
+      category_id,
+      brand_id,
     })
     await newProduct.save()
   }
