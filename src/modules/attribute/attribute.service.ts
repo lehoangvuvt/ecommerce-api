@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Global, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import CreateAttributeSetValueMappingDTO from 'src/dtos/create-attribute-set-value-mapping.dto'
 import CreateAttributeSetDTO from 'src/dtos/create-attribute-set.dto'
@@ -17,14 +17,23 @@ export class AttributeService {
     @InjectRepository(Attribute) private attributeRepository: Repository<Attribute>,
     @InjectRepository(AttributeValue) private attributeValueRepository: Repository<AttributeValue>,
     @InjectRepository(AttributeSet) private attributeSetRepository: Repository<AttributeSet>,
-    @InjectRepository(AttributeSetValueMapping) private attributeSetValueMappingRepository: Repository<AttributeSetValueMapping>,
-    ) {}
+    @InjectRepository(AttributeSetValueMapping) private attributeSetValueMappingRepository: Repository<AttributeSetValueMapping>
+  ) {}
 
-  async createAttribute(createAttributeDTO: CreateAttributeDTO) {
+  async getAttributeDetails(attribute_id: string) {
+    const attribute = await this.attributeRepository.findOne({ where: { id: attribute_id } })
+    return attribute
+  }
+
+  async createAttribute(createAttributeDTO: CreateAttributeDTO): Promise<Attribute> {
     try {
+      const { attribute_name, is_primary, value_type } = createAttributeDTO
+      const existedAttribute = await this.attributeRepository.findOne({ where: { attribute_name } })
+      if (existedAttribute) return existedAttribute
       const newAttribute = this.attributeRepository.create({
-        attribute_name: createAttributeDTO.attribute_name,
-        value_type: createAttributeDTO.value_type,
+        attribute_name: attribute_name,
+        value_type: value_type,
+        is_primary: is_primary,
       })
       const result = await newAttribute.save()
       return result
@@ -47,7 +56,7 @@ export class AttributeService {
 
   async createAttributeValue(createAttributeValueDTO: CreateAttributeValueDTO): Promise<AttributeValue> {
     try {
-      const { attribute_id, value_decimal, value_int, value_string } = createAttributeValueDTO
+      const { attribute_id, value } = createAttributeValueDTO
       const attribute = await this.attributeRepository.findOne({ where: { id: attribute_id } })
       if (!attribute) return null
       const attributeValueType = attribute.value_type
@@ -56,19 +65,19 @@ export class AttributeService {
         case 0:
           newAttributeValue = this.attributeValueRepository.create({
             attribute_id: attribute_id,
-            value_decimal,
+            value_decimal: parseFloat(value),
           })
           break
         case 1:
           newAttributeValue = this.attributeValueRepository.create({
             attribute_id: attribute_id,
-            value_int,
+            value_int: parseInt(value),
           })
           break
         case 2:
           newAttributeValue = this.attributeValueRepository.create({
             attribute_id: attribute_id,
-            value_string,
+            value_string: value,
           })
           break
       }

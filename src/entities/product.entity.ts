@@ -36,14 +36,14 @@ class Product extends CustomBase {
   @OneToMany(() => ProductVariance, (productVariance) => productVariance)
   productVariances: ProductVariance[]
 
-  @ManyToOne(() => Brand, (brand) => brand.products)
+  @ManyToOne(() => Brand, (brand) => brand.products, { eager: true })
   @JoinColumn({ name: 'brand_id' })
   brand: Brand
 
-  @OneToMany(() => ProductImage, (productImage) => productImage.product)
+  @OneToMany(() => ProductImage, (productImage) => productImage.product, { eager: true })
   images: ProductImage[]
 
-  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.products)
+  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.products, { eager: true })
   @JoinColumn({ name: 'attribute_set_id' })
   attributeSet: AttributeSet
 }

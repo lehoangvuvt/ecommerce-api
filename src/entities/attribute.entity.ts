@@ -11,6 +11,9 @@ class Attribute extends CustomBase {
   @Column({ type: 'int2', default: 0 })
   value_type: number
 
+  @Column({ type: 'boolean', default: false })
+  is_primary: boolean
+
   @OneToMany(() => AttributeValue, (attributeValue) => attributeValue.attribute, { cascade: true })
   attributeValues: AttributeValue[]
 }

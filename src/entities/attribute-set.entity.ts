@@ -17,7 +17,7 @@ class AttributeSet extends CustomBase {
   @OneToMany(() => AttributeSetValueMapping, (attrSetValueMapping) => attrSetValueMapping.attributeSet, { cascade: true, eager: true })
   attributeSetValueMappings: AttributeSetValueMapping[]
 
-  @OneToMany(() => Product, (product) => product.attributeSet, { eager: true })
+  @OneToMany(() => Product, (product) => product.attributeSet)
   products: Product[]
 }
 

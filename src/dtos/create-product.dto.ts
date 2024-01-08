@@ -36,11 +36,33 @@ class CreateProductDTO {
 
   @ApiProperty({
     description: 'ID of attribute set assign to product',
-    type: String,
+    type: Object,
     required: true,
   })
-  @IsString()
-  attribute_set_id: string
+  productAttributes: { [key: string]: any }
+
+  @ApiProperty({
+    description: 'ID of attribute set assign to product',
+    type: Array,
+    required: true,
+  })
+  productVariances: [
+    {
+      imageURL: string
+      mainAttribute: {
+        name: string
+        value: any
+      }
+      subAttribute: {
+        name: string
+        values: {
+          quantity: number
+          price: number
+          value: any
+        }[]
+      }
+    }
+  ]
 }
 
 export default CreateProductDTO

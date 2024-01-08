@@ -10,11 +10,8 @@ import AttributeSet from './attribute-set.entity'
 
 @Entity()
 class ProductVariance extends CustomBase {
-  @Column({ unique: true, type: 'varchar', nullable: false })
-  name: string
-
-  @Column({ unique: true, type: 'varchar', nullable: false })
-  attribute_name: string
+  @Column({ type: 'varchar', nullable: false })
+  product_id: string
 
   @Column({ type: 'varchar', nullable: true })
   attribute_set_id: string
@@ -26,11 +23,11 @@ class ProductVariance extends CustomBase {
   @JoinColumn({ name: 'product_id' })
   product: Product
 
-  @OneToMany(() => ProductImage, (productImage) => productImage.productVariance)
-  productImages: ProductImage[]
+  @OneToMany(() => ProductImage, (productImage) => productImage.productVariance, { eager: true })
+  productVarianceImages: ProductImage[]
 
   @OneToMany(() => ProductPriceHistory, (productPriceHistory) => productPriceHistory.productVariance)
-  productPriceHistories: ProductVarianceImage[]
+  productPriceHistories: ProductPriceHistory[]
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.productVariance)
   cartItems: CartItem[]
@@ -38,7 +35,7 @@ class ProductVariance extends CustomBase {
   @OneToMany(() => OrderItem, (orderItem) => orderItem.productVariance)
   orderItems: OrderItem[]
 
-  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.productVariances)
+  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.productVariances, { eager: true })
   @JoinColumn({ name: 'attribute_set_id' })
   attributeSet: AttributeSet
 }

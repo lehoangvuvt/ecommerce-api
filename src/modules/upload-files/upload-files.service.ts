@@ -16,22 +16,27 @@ export class UploadedFilesService {
     // const a = await sharp(base64).toBuffer()
     const formattedName = name.replace(' ', '_').split('.')[0]
     let resourceType: 'image' | 'video' | 'auto' | 'raw' = 'raw'
-    let subPath = ''
+    let subPath = 'ecommerce/'
     if (type.includes('image')) {
-      subPath = 'images'
+      subPath += 'images'
       resourceType = 'image'
     } else if (type.includes('audio')) {
-      subPath = 'audio'
+      subPath += 'audio'
       resourceType = 'video'
     } else if (type.includes('video')) {
-      subPath = 'videos'
+      subPath += 'videos'
       resourceType = 'video'
     } else {
-      subPath = 'others'
+      subPath += 'others'
       resourceType = 'raw'
     }
     try {
-      const responseUpload = await cloudinary.uploader.upload(base64, { public_id: formattedName, folder: subPath, resource_type: resourceType })
+      const responseUpload = await cloudinary.uploader.upload(base64, {
+        use_filename: true, 
+        unique_filename: false,
+        folder: subPath,
+        resource_type: resourceType,
+      })
       return {
         public_id: responseUpload.public_id,
         secure_url: responseUpload.secure_url,
