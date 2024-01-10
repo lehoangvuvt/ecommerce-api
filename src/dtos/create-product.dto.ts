@@ -1,6 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsString } from 'class-validator'
 
+export type CProductProducVariance = {
+  imageURL: string
+  mainAttribute: {
+    name: string
+    value: any
+  }
+  subAttribute: {
+    name: string
+    values: {
+      quantity: number
+      price: number
+      value: any
+    }[]
+  }
+}
+
 class CreateProductDTO {
   @ApiProperty({
     description: 'Name of product',
@@ -42,27 +58,20 @@ class CreateProductDTO {
   productAttributes: { [key: string]: any }
 
   @ApiProperty({
-    description: 'ID of attribute set assign to product',
-    type: Array,
+    description: 'List of images URLs of the product',
+    type: String,
+    required: true,
+    isArray: true,
+  })
+  images: string[]
+
+  @ApiProperty({
+    description: 'Product variances',
+    type: Object,
+    isArray: true,
     required: true,
   })
-  productVariances: [
-    {
-      imageURL: string
-      mainAttribute: {
-        name: string
-        value: any
-      }
-      subAttribute: {
-        name: string
-        values: {
-          quantity: number
-          price: number
-          value: any
-        }[]
-      }
-    }
-  ]
+  productVariances: CProductProducVariance[]
 }
 
 export default CreateProductDTO

@@ -16,10 +16,17 @@ export class ProductController {
     return res.status(200).json(response)
   }
 
-  @ApiParam({ name: 'id', type: String })
-  @Get('/:id')
-  async getProductDetails(@Param() params: { id: string }, @Res() res: Response) {
-    const response = await this.service.getProductDetails(params.id)
+  @ApiParam({ name: 'slug', type: String })
+  @Get('/:slug')
+  async getProductDetails(@Param() params: { slug: string }, @Res() res: Response) {
+    const response = await this.service.getProductDetails(params.slug)
+    return res.status(200).json(response)
+  }
+
+  @ApiParam({ name: 'searchParams', type: String })
+  @Get('/search/:searchParams')
+  async searchProducts(@Param() params: { searchParams: string }, @Res() res: Response) {
+    const response = await this.service.searchProducts(params.searchParams)
     return res.status(200).json(response)
   }
 

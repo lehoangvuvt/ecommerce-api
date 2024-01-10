@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import Category from './category.entity'
 import ProductVariance from './product-variance.entity'
@@ -28,6 +28,11 @@ class Product extends CustomBase {
   @ApiProperty()
   @Column({ type: 'varchar', nullable: false })
   attribute_set_id: string
+
+  @ApiProperty()
+  @Column({ type: 'varchar', nullable: false, unique: true })
+  @Index()
+  slug: string
 
   @ManyToOne(() => Category, (category) => category.products)
   @JoinColumn({ name: 'category_id' })

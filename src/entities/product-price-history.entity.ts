@@ -4,10 +4,13 @@ import ProductVariance from './product-variance.entity'
 
 @Entity()
 class ProductPriceHistory extends CustomBase {
-  @Column({ type: 'decimal', precision: 2, width: 10, nullable: false })
+  @Column({ type: 'varchar', nullable: false })
+  product_variance_id: string
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
   price: number
 
-  @ManyToOne(() => ProductVariance, (productVariance) => productVariance.productPriceHistories)
+  @ManyToOne(() => ProductVariance, (productVariance) => productVariance.productPriceHistories, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_variance_id' })
   productVariance: ProductVariance
 }

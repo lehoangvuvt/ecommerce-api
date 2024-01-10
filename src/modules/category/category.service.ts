@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Global, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import AssignAttributeSetDTO from 'src/dtos/assign-attribute-set.dto'
 import CategoryDetailsDTO from 'src/dtos/category-details.dto'
@@ -9,6 +9,7 @@ import AttributeSet from 'src/entities/attribute-set.entity'
 import Brand from 'src/entities/brand.entity'
 import CategoryBrand from 'src/entities/category-brand.entity'
 import Category from 'src/entities/category.entity'
+import { slugGenerator } from 'src/utils/utils'
 import { Repository } from 'typeorm'
 
 export type CategoryWithChild = {
@@ -31,6 +32,7 @@ export type AttributeWithNumberValues = {
   values: number[]
 }
 
+@Global()
 @Injectable()
 export class CategoryService {
   constructor(
@@ -52,6 +54,19 @@ export class CategoryService {
       })
     categories.forEach((item) => this.getChildCategories(item, allCategories))
     return categories
+  }
+
+  async getCategoryPath(categoryId: string): Promise<{ name: string; id: string; slug: string }[]> {
+    const allCategories = await this.categoryRepository.find()
+    const category = allCategories.find((category) => category.id === categoryId)
+    let path: { name: string; id: string; slug: string }[] = [{ name: category.category_name, id: category.id, slug: category.slug }]
+    let parentCategoryId = category.parent_category_id
+    do {
+      const parentCategory = allCategories.find((category) => category.id === parentCategoryId)
+      path.unshift({ id: parentCategory.id, name: parentCategory.category_name, slug: parentCategory.slug })
+      parentCategoryId = parentCategory.parent_category_id
+    } while (parentCategoryId !== null)
+    return path
   }
 
   async getCategoryDetails(categoryId: string): Promise<CategoryDetailsDTO> {
@@ -146,10 +161,10 @@ export class CategoryService {
         parentCategory = await this.categoryRepository.findOneBy({ id: createCategoryDTO.parent_category_id })
         if (!parentCategory) return null
       }
-
       const newCategory = this.categoryRepository.create({
         category_name: createCategoryDTO.category_name,
         parentCategory,
+        slug: slugGenerator(createCategoryDTO.category_name),
       })
       const result = await newCategory.save()
       return result

@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm'
+import { Column, Entity, Index, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import AttributeValue from './attribute-value.entity'
 
@@ -13,6 +13,10 @@ class Attribute extends CustomBase {
 
   @Column({ type: 'boolean', default: false })
   is_primary: boolean
+
+  @Column({ type: 'varchar', unique: true, nullable: false })
+  @Index()
+  short_id: string
 
   @OneToMany(() => AttributeValue, (attributeValue) => attributeValue.attribute, { cascade: true })
   attributeValues: AttributeValue[]

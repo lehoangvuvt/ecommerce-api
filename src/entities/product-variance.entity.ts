@@ -19,14 +19,14 @@ class ProductVariance extends CustomBase {
   @Column({ type: 'int2', nullable: false, default: 0 })
   quantity: number
 
-  @ManyToOne(() => Product, (product) => product.productVariances)
+  @ManyToOne(() => Product, (product) => product.productVariances, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: Product
 
   @OneToMany(() => ProductImage, (productImage) => productImage.productVariance, { eager: true })
   productVarianceImages: ProductImage[]
 
-  @OneToMany(() => ProductPriceHistory, (productPriceHistory) => productPriceHistory.productVariance)
+  @OneToMany(() => ProductPriceHistory, (productPriceHistory) => productPriceHistory.productVariance, { eager: true })
   productPriceHistories: ProductPriceHistory[]
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.productVariance)

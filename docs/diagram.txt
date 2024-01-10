@@ -11,6 +11,7 @@ Table product {
   category_id varchar
   brand_id varchar
   attribute_set_id varchar
+  slug varchar [unique]
 }
 
 Table product_image {
@@ -79,6 +80,7 @@ Table category {
   category_name varchar
   parent_category_id varchar
   attribute_set_id varchar
+  slug varchar [unique]
 }
 
 Table product_price_history {

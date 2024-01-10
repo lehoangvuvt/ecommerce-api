@@ -13,7 +13,7 @@ class ProductVarianceImage extends CustomBase {
   @Column({ type: 'varchar', nullable: false })
   product_variance_id: string
 
-  @ManyToOne(() => ProductVariance, (productVariance) => productVariance.productVarianceImages)
+  @ManyToOne(() => ProductVariance, (productVariance) => productVariance.productVarianceImages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_variance_id' })
   productVariance: ProductVariance
 }

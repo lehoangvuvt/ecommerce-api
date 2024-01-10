@@ -10,10 +10,31 @@ import AttributeValue from 'src/entities/attribute-value.entity'
 import { AttributeService } from '../attribute/attribute.service'
 import AttributeSet from 'src/entities/attribute-set.entity'
 import AttributeSetValueMapping from 'src/entities/attribute-set-value-mapping.entity'
+import ProductImage from 'src/entities/product-image.entity'
+import ProductPriceHistory from 'src/entities/product-price-history.entity'
+import ProductVarianceImage from 'src/entities/product-variance-image.entity'
+import { CategoryService } from '../category/category.service'
+import CategoryBrand from 'src/entities/category-brand.entity'
+import Brand from 'src/entities/brand.entity'
 
 @Module({
   controllers: [ProductController],
-  imports: [TypeOrmModule.forFeature([Product, Attribute, AttributeValue, AttributeSet, AttributeSetValueMapping, ProductVariance, Category])],
-  providers: [ProductService, AttributeService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Product,
+      ProductImage,
+      ProductVarianceImage,
+      ProductPriceHistory,
+      Attribute,
+      AttributeValue,
+      AttributeSet,
+      AttributeSetValueMapping,
+      ProductVariance,
+      Category,
+      CategoryBrand,
+      Brand,
+    ]),
+  ],
+  providers: [ProductService, AttributeService, CategoryService],
 })
 export class ProductModule {}

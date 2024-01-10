@@ -28,12 +28,15 @@ export class AttributeService {
   async createAttribute(createAttributeDTO: CreateAttributeDTO): Promise<Attribute> {
     try {
       const { attribute_name, is_primary, value_type } = createAttributeDTO
+      const total = await this.attributeRepository.count()
+      const shortId = `attribute_${total + 1}`
       const existedAttribute = await this.attributeRepository.findOne({ where: { attribute_name } })
       if (existedAttribute) return existedAttribute
       const newAttribute = this.attributeRepository.create({
         attribute_name: attribute_name,
         value_type: value_type,
         is_primary: is_primary,
+        short_id: shortId,
       })
       const result = await newAttribute.save()
       return result
