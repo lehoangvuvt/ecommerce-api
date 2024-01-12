@@ -29,6 +29,7 @@ import { UploadedFilesModule } from './modules/upload-files/upload-files.module'
 import { BrandModule } from './modules/brand/brand.module'
 import { CategoryBrandModule } from './modules/category-brand/category-brand.module'
 import { AttributeModule } from './modules/attribute/attribute.module'
+import { DataSource } from 'typeorm'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -73,4 +74,6 @@ import { AttributeModule } from './modules/attribute/attribute.module'
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private datasource: DataSource) {}
+}

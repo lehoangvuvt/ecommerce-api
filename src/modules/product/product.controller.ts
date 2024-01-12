@@ -30,6 +30,13 @@ export class ProductController {
     return res.status(200).json(response)
   }
 
+  @ApiParam({ name: 'searchParams', type: String })
+  @Get('/search/search-filters/:searchParams')
+  async getSearchFilters(@Param() params: { searchParams: string }, @Res() res: Response) {
+    const response = await this.service.getSearchFilters(params.searchParams)
+    return res.status(200).json(response)
+  }
+
   @ApiBody({ type: CreateProductDTO })
   @ApiCreatedResponse({ description: 'The record has been successfully created.', type: Product })
   @Post('/')

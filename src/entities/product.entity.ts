@@ -34,7 +34,7 @@ class Product extends CustomBase {
   @Index()
   slug: string
 
-  @ManyToOne(() => Category, (category) => category.products)
+  @ManyToOne(() => Category, (category) => category.products, { eager: true })
   @JoinColumn({ name: 'category_id' })
   category: Category
 

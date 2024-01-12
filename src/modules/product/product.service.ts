@@ -5,7 +5,7 @@ import AttributeSet from 'src/entities/attribute-set.entity'
 import Attribute from 'src/entities/attribute.entity'
 import Category from 'src/entities/category.entity'
 import Product from 'src/entities/product.entity'
-import { EntityManager, Repository, getManager } from 'typeorm'
+import { DataSource, EntityManager, ILike, In, Like, Repository, getManager } from 'typeorm'
 import { AttributeService } from '../attribute/attribute.service'
 import ProductVariance from 'src/entities/product-variance.entity'
 import ProductImage from 'src/entities/product-image.entity'
@@ -13,6 +13,7 @@ import ProductPriceHistory from 'src/entities/product-price-history.entity'
 import ProductVarianceImage from 'src/entities/product-variance-image.entity'
 import { slugGenerator } from 'src/utils/utils'
 import { CategoryService } from '../category/category.service'
+import { TPagingListResponse } from 'src/types/response.types'
 
 @Injectable()
 export class ProductService {
@@ -24,7 +25,8 @@ export class ProductService {
     @InjectRepository(ProductPriceHistory) private productPriceHistoryRepository: Repository<ProductPriceHistory>,
     @InjectRepository(Category) private categoryRepository: Repository<Category>,
     @Inject(AttributeService) private attributeService: AttributeService,
-    @Inject(CategoryService) private categoryService: CategoryService
+    @Inject(CategoryService) private categoryService: CategoryService,
+    private datasource: DataSource
   ) {}
 
   async getAllProducts() {
@@ -175,8 +177,9 @@ export class ProductService {
     return createProductRes
   }
 
-  async searchProducts(searchParams: string): Promise<Product[]> {
+  async searchProducts(searchParams: string): Promise<TPagingListResponse<Product>> {
     let query: { [key: string]: string[] } = {}
+    const itemsPerPage = 30
 
     searchParams.split('&').forEach((item) => {
       query[item.split('=')[0]] = item.split('=')[1].split(',')
@@ -185,6 +188,27 @@ export class ProductService {
     let baseQuery = this.productRepository.createQueryBuilder('product').select('product').leftJoinAndSelect('product.images', 'images')
 
     let whereQueries = ''
+
+    if (Object.keys(query).some((key) => key.includes('attribute_'))) {
+      const attributeEntries = Object.entries(query).filter((entry) => entry[0].includes('attribute_'))
+      const setIds = await this.getAttributeSetIdsBaseOnQuery(attributeEntries)
+      if (setIds.length > 0) {
+        let inValuesQuery = 'IN ('
+        setIds.forEach((id) => {
+          inValuesQuery += `'${id}',`
+        })
+        inValuesQuery = inValuesQuery.substring(0, inValuesQuery.length - 1) + ')'
+        whereQueries += `product.attribute_set_id ${inValuesQuery} `
+      } else {
+        return {
+          current_page: parseInt(query['page'][0]),
+          data: [],
+          has_next: false,
+          total: 0,
+          total_page: 0,
+        }
+      }
+    }
 
     if (query['c']) {
       baseQuery.leftJoin('category', 'category', 'category.id=product.category_id')
@@ -202,10 +226,10 @@ export class ProductService {
       delete query['c']
     }
 
-    if (query['b']) {
+    if (query['brands']) {
       baseQuery.leftJoin('brand', 'brand', 'brand.id=product.brand_id')
       let inQuery = '('
-      query['b'].forEach((value) => {
+      query['brands'].forEach((value) => {
         inQuery += `'${value}',`
       })
       inQuery = inQuery.substring(0, inQuery.length - 1)
@@ -215,43 +239,26 @@ export class ProductService {
       } else {
         whereQueries += `AND brand.brand_name IN ${inQuery} `
       }
-      delete query['b']
+      delete query['brands']
     }
 
-    if (Object.keys(query).some((key) => key.includes('attribute_'))) {
-      baseQuery
-        .leftJoin('attribute_set_value_mapping', 'attribute_set_value_mapping', 'attribute_set_value_mapping.attribute_set_id=product.attribute_set_id')
-        .leftJoin('attribute_value', 'attribute_value', 'attribute_value.id=attribute_set_value_mapping.attribute_value_id')
-        .leftJoin('attribute', 'attribute', 'attribute.id=attribute_value.attribute_id')
-      for (let key in query) {
-        if (key.includes('attribute_')) {
-          let inQuery = '('
-          query[key].forEach((value) => {
-            inQuery += `'${value}',`
-          })
-          inQuery = inQuery.substring(0, inQuery.length - 1)
-          inQuery += ')'
-          console.log(inQuery)
-          if (whereQueries.length === 0) {
-            whereQueries += `attribute.short_id='${key}' AND attribute_value.value_string IN ${inQuery} `
-          } else {
-            whereQueries += `AND attribute.short_id='${key}' AND attribute_value.value_string ${inQuery} `
-          }
-        }
+    if (query['keyword']) {
+      if (whereQueries.length === 0) {
+        whereQueries += `LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
+      } else {
+        whereQueries += `AND LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
       }
     }
-
-    // if (query['keyword']) {
-    //   if (whereQueries.length === 0) {
-    //     whereQueries += `LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
-    //   } else {
-    //     whereQueries += `AND LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
-    //   }
-    // }
 
     if (query['sortBy']) {
       switch (query['sortBy'][0]) {
         case 'ctime':
+          baseQuery.orderBy('product.createdAt', 'DESC')
+          break
+        case 'pop':
+          baseQuery.orderBy('product.createdAt', 'DESC')
+          break
+        case 'sales':
           baseQuery.orderBy('product.createdAt', 'DESC')
           break
       }
@@ -262,27 +269,165 @@ export class ProductService {
     baseQuery.take(20)
     baseQuery.skip(parseInt(query['page'][0]))
     const result = await baseQuery.getMany()
-
-    const resultWithPrices: Product[] = []
-
-    const getPrices = result.map(async (product) => {
-      const variances = await this.productVarianceRepository.find({ where: { product_id: product.id } })
-      const prices = variances
-        .map((variance) => {
-          return variance.productPriceHistories[0].price
+    const total_page = Math.ceil(total / itemsPerPage)
+    const current_page = parseInt(query['page'][0])
+    const has_next = current_page + 1 < total_page
+    if (result.length > 0) {
+      let resultWithPrices = result.map((product) => {
+        product['product_images'] = product.images.map((image) => {
+          return image.image_url
         })
-        .sort((a, b) => b - a)
-      product['price_lowest'] = prices[prices.length - 1]
-      product['price_highest'] = prices[0]
-      product['product_images'] = product.images.map((image) => {
-        return image.image_url
+        delete product.images
+        product['prices'] = []
+        return product
       })
-      delete product.images
-      resultWithPrices.push(product)
+
+      const productIds = result.map((product) => {
+        return product.id
+      })
+
+      const variances = await this.productVarianceRepository.findBy({ product_id: In(productIds) })
+      variances.forEach((variance) => {
+        const productId = variance.product_id
+        const index = resultWithPrices.findIndex((product) => product.id === productId)
+        resultWithPrices[index]['prices'].push(variance.productPriceHistories[0].price)
+      })
+      return {
+        data: resultWithPrices,
+        current_page: parseInt(query['page'][0]),
+        has_next,
+        total,
+        total_page,
+      }
+    } else {
+      return {
+        current_page: parseInt(query['page'][0]),
+        data: [],
+        has_next: false,
+        total: 0,
+        total_page,
+      }
+    }
+  }
+
+  async getAttributeSetIdsBaseOnQuery(attributeEntries: [string, string[]][]): Promise<string[]> {
+    const intersectBaseQuery = `
+      SELECT ats.id
+      FROM attribute_set_value_mapping asvm
+      JOIN attribute_set ats ON ats.id=asvm.attribute_set_id
+      JOIN attribute_value atv ON asvm.attribute_value_id=atv.id
+      JOIN attribute atr ON atr.id = atv.attribute_id
+      JOIN product pd ON pd.attribute_set_id = ats.id`
+    const queriesToIntersect = [] as string[]
+    attributeEntries.forEach((entry) => {
+      const short_id = entry[0]
+      const whereQuery = `WHERE atr.short_id='${short_id}' AND atv.value_string`
+      let inValuesQuery = 'IN ('
+      entry[1].forEach((value) => {
+        inValuesQuery += `'${value}',`
+      })
+      inValuesQuery = inValuesQuery.substring(0, inValuesQuery.length - 1) + ')'
+      const wholeQuery = `${intersectBaseQuery} ${whereQuery} ${inValuesQuery}`
+      queriesToIntersect.push(wholeQuery)
     })
+    let rawQuery = ''
+    queriesToIntersect.forEach((query, i) => {
+      rawQuery += query
+      if (i < queriesToIntersect.length - 1) {
+        rawQuery += ' INTERSECT'
+      }
+    })
+    rawQuery += ' GROUP BY ats.id'
+    const result = await this.datasource.query(rawQuery)
+    return result.map((item: { id: string }) => item.id)
+  }
 
-    await Promise.all(getPrices)
-
-    return resultWithPrices
+  async getSearchFilters(searchParams: string) {
+    let query: { [key: string]: string[] } = {}
+    searchParams.split('&').forEach((item) => {
+      query[item.split('=')[0]] = item.split('=')[1].split(',')
+    })
+    let productFilters: { [key: string]: { name: string; values: any[] } } = {
+      brands: {
+        name: 'Brand',
+        values: [],
+      },
+    }
+    if (query['c']) {
+      const categorySlugs = query['c']
+      const categories = await this.categoryRepository.findBy({ slug: In(categorySlugs) })
+      const attributeSet = categories[0].attributeSet
+      const categoryDetails = await this.categoryService.getCategoryDetails(categories[0].id)
+      categoryDetails.brands.forEach((brand) => {
+        productFilters.brands.values.push(brand.brand_name)
+      })
+      attributeSet.attributeSetValueMappings.map((avm) => {
+        const valueType = avm.attributeValue.attribute.value_type
+        let value = null
+        switch (valueType) {
+          case 0:
+            value = avm.attributeValue.value_decimal
+            break
+          case 1:
+            value = avm.attributeValue.value_int
+            break
+          case 2:
+            value = avm.attributeValue.value_string
+            break
+        }
+        if (value) {
+          const attributeName = avm.attributeValue.attribute.attribute_name
+          const attributeShortId = avm.attributeValue.attribute.short_id
+          if (!productFilters[attributeShortId]) {
+            productFilters[attributeShortId] = { name: attributeName, values: [value] }
+          } else {
+            productFilters[attributeShortId].values.push(value)
+          }
+        }
+      })
+      return productFilters
+    }
+    if (query['keyword'] && !query['c']) {
+      const product = await this.productRepository
+        .createQueryBuilder('pd')
+        .leftJoinAndSelect('pd.category', 'category')
+        .leftJoinAndSelect('category.attributeSet', 'attributeSet')
+        .leftJoinAndSelect('attributeSet.attributeSetValueMappings', 'attributeSetValueMappings')
+        .leftJoinAndSelect('attributeSetValueMappings.attributeValue', 'attributeValue')
+        .leftJoinAndSelect('attributeValue.attribute', 'attribute')
+        .where(`LOWER(pd.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%'`)
+        .getOne()
+      if (!product) return []
+      const attributeSet = product.category.attributeSet
+      const categoryDetails = await this.categoryService.getCategoryDetails(product.category.id)
+      categoryDetails.brands.forEach((brand) => {
+        productFilters.brands.values.push(brand.brand_name)
+      })
+      attributeSet.attributeSetValueMappings.map((avm) => {
+        const valueType = avm.attributeValue.attribute.value_type
+        let value = null
+        switch (valueType) {
+          case 0:
+            value = avm.attributeValue.value_decimal
+            break
+          case 1:
+            value = avm.attributeValue.value_int
+            break
+          case 2:
+            value = avm.attributeValue.value_string
+            break
+        }
+        if (value) {
+          const attributeName = avm.attributeValue.attribute.attribute_name
+          const attributeShortId = avm.attributeValue.attribute.short_id
+          if (!productFilters[attributeShortId]) {
+            productFilters[attributeShortId] = { name: attributeName, values: [value] }
+          } else {
+            productFilters[attributeShortId].values.push(value)
+          }
+        }
+      })
+      return productFilters
+    }
   }
 }

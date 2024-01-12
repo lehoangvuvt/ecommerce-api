@@ -37,7 +37,7 @@ class Category extends CustomBase {
   @OneToMany(() => CategoryBrand, (categoryBrand) => categoryBrand.brand, { cascade: true })
   categoryBrands: CategoryBrand[]
 
-  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.categories)
+  @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.categories, { eager: true })
   @JoinColumn({ name: 'attribute_set_id' })
   attributeSet: AttributeSet
 }
