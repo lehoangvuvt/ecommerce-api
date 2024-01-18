@@ -8,6 +8,27 @@ class Order extends CustomBase {
   @Column({ type: 'int2', nullable: false, default: 0 })
   status: number
 
+  @Column({ type: 'varchar', nullable: false })
+  country: string
+
+  @Column({ type: 'varchar', nullable: false })
+  city: string
+
+  @Column({ type: 'varchar', nullable: false })
+  district: string
+
+  @Column({ type: 'varchar', nullable: false })
+  address: string
+
+  @Column({ type: 'varchar', nullable: false })
+  phone: string
+
+  @Column({ type: 'varchar', nullable: false })
+  firstName: string
+
+  @Column({ type: 'varchar', nullable: false })
+  lastName: string
+
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   items: OrderItem[]
 

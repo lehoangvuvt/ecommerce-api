@@ -14,10 +14,7 @@ class UserShippingInfo extends CustomBase {
   district: string
 
   @Column({ type: 'varchar', nullable: false })
-  streetName: string
-
-  @Column({ type: 'varchar', nullable: false })
-  addressNumber: string
+  address: string
 
   @Column({ type: 'varchar', nullable: false })
   phone: string

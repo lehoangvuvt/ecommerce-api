@@ -29,6 +29,7 @@ Table attribute {
   updatedAt datetime
   attribute_name varchar
   value_type int
+  short_id varchar [unique]
 }
 
 Table attribute_value {
@@ -135,8 +136,7 @@ Table user_shipping_info {
   country varchar
   city varchar
   district varchar
-  streetName varchar
-  addressNumber varchar
+  address varchar
   phone varchar
   firstName varchar
   lastName varchar
@@ -150,6 +150,13 @@ Table order {
   updatedAt datetime
   user_id varchar
   status integer
+  country varchar
+  city varchar
+  district varchar
+  address varchar
+  phone varchar
+  firstName varchar
+  lastName varchar
 }
 
 Table order_item {

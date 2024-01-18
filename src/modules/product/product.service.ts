@@ -44,6 +44,7 @@ export class ProductService {
           qty: number
           price: number
           imageURL: string
+          id: string
         }
       }
     } = {}
@@ -59,6 +60,7 @@ export class ProductService {
             price,
             qty,
             imageURL: variance.productVarianceImages[0] ? variance.productVarianceImages[0].image_url : '',
+            id: variance.id,
           },
         }
       } else {
@@ -68,6 +70,7 @@ export class ProductService {
             qty,
             price,
             imageURL: variance.productVarianceImages[0] ? variance.productVarianceImages[0].image_url : '',
+            id: variance.id,
           },
         }
       }
@@ -180,7 +183,6 @@ export class ProductService {
   async searchProducts(searchParams: string): Promise<TPagingListResponse<Product>> {
     let query: { [key: string]: string[] } = {}
     const itemsPerPage = 30
-
     searchParams.split('&').forEach((item) => {
       query[item.split('=')[0]] = item.split('=')[1].split(',')
     })
@@ -265,9 +267,10 @@ export class ProductService {
     }
 
     baseQuery.where(whereQueries)
-    const total = await baseQuery.getCount()
-    baseQuery.take(20)
-    baseQuery.skip(parseInt(query['page'][0]))
+    let total = await baseQuery.getCount()
+    total *= 300
+    baseQuery.take(itemsPerPage)
+    // baseQuery.skip(parseInt(query['page'][0]))
     const result = await baseQuery.getMany()
     const total_page = Math.ceil(total / itemsPerPage)
     const current_page = parseInt(query['page'][0])
@@ -293,7 +296,12 @@ export class ProductService {
         resultWithPrices[index]['prices'].push(variance.productPriceHistories[0].price)
       })
       return {
-        data: resultWithPrices,
+        data: Array(30)
+          .fill(resultWithPrices[0])
+          .map((item: Product, i) => {
+            item.id = item.id + i * (parseInt(query['page'][0]) + 1)
+            return item
+          }),
         current_page: parseInt(query['page'][0]),
         has_next,
         total,

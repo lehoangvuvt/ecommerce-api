@@ -30,6 +30,7 @@ import { BrandModule } from './modules/brand/brand.module'
 import { CategoryBrandModule } from './modules/category-brand/category-brand.module'
 import { AttributeModule } from './modules/attribute/attribute.module'
 import { DataSource } from 'typeorm'
+import { AuthModule } from './modules/auth/auth.module'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -70,6 +71,7 @@ import { DataSource } from 'typeorm'
     BrandModule,
     CategoryBrandModule,
     AttributeModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
