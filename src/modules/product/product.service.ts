@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import CreateProductDTO from 'src/dtos/create-product.dto'
 import AttributeSet from 'src/entities/attribute-set.entity'
 import Attribute from 'src/entities/attribute.entity'
@@ -14,11 +14,14 @@ import ProductVarianceImage from 'src/entities/product-variance-image.entity'
 import { slugGenerator } from 'src/utils/utils'
 import { CategoryService } from '../category/category.service'
 import { TPagingListResponse } from 'src/types/response.types'
+import Brand from 'src/entities/brand.entity'
 
 @Injectable()
 export class ProductService {
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     @InjectRepository(Product) private productRepository: Repository<Product>,
+    @InjectRepository(Brand) private brandRepository: Repository<Brand>,
     @InjectRepository(ProductVariance) private productVarianceRepository: Repository<ProductVariance>,
     @InjectRepository(ProductImage) private productImageRepository: Repository<ProductImage>,
     @InjectRepository(ProductVarianceImage) private productVarianceImageRepository: Repository<ProductVarianceImage>,
@@ -26,6 +29,7 @@ export class ProductService {
     @InjectRepository(Category) private categoryRepository: Repository<Category>,
     @Inject(AttributeService) private attributeService: AttributeService,
     @Inject(CategoryService) private categoryService: CategoryService,
+
     private datasource: DataSource
   ) {}
 
@@ -177,6 +181,16 @@ export class ProductService {
         const createProductVarianceImageRes = await newProductVarianceImage.save()
       })
     })
+    const category = await this.categoryRepository.findOne({ where: { id: category_id } })
+    const brand = await this.brandRepository.findOne({ where: { id: brand_id } })
+    await this.entityManager.query(`
+    UPDATE product
+    SET document = setweight(to_tsvector(product_name), 'A') 
+    || setweight(to_tsvector('${category.category_name}'), 'B')
+    || setweight(to_tsvector('${brand.brand_name}'), 'C')
+    || setweight(to_tsvector(slug), 'D')
+    WHERE id='${createProductRes.id}'
+    `)
     return createProductRes
   }
 
@@ -184,12 +198,26 @@ export class ProductService {
     let query: { [key: string]: string[] } = {}
     const itemsPerPage = 30
     searchParams.split('&').forEach((item) => {
-      query[item.split('=')[0]] = item.split('=')[1].split(',')
+      if (item.includes('=')) {
+        query[item.split('=')[0]] = item.split('=')[1].split(',')
+      }
     })
 
     let baseQuery = this.productRepository.createQueryBuilder('product').select('product').leftJoinAndSelect('product.images', 'images')
 
     let whereQueries = ''
+    let documentQryString = ''
+    if (query['keyword']) {
+      const keywordArr = query['keyword'][0].trim().split(' ')
+      keywordArr.forEach((word, i) => {
+        if (i < keywordArr.length - 1) {
+          documentQryString += `${word}:* & `
+        } else {
+          documentQryString += `${word}:*`
+        }
+      })
+      whereQueries += `document @@ to_tsquery('${documentQryString}')`
+    }
 
     if (Object.keys(query).some((key) => key.includes('attribute_'))) {
       const attributeEntries = Object.entries(query).filter((entry) => entry[0].includes('attribute_'))
@@ -200,7 +228,7 @@ export class ProductService {
           inValuesQuery += `'${id}',`
         })
         inValuesQuery = inValuesQuery.substring(0, inValuesQuery.length - 1) + ')'
-        whereQueries += `product.attribute_set_id ${inValuesQuery} `
+        whereQueries += `AND product.attribute_set_id ${inValuesQuery} `
       } else {
         return {
           current_page: parseInt(query['page'][0]),
@@ -242,14 +270,6 @@ export class ProductService {
         whereQueries += `AND brand.brand_name IN ${inQuery} `
       }
       delete query['brands']
-    }
-
-    if (query['keyword']) {
-      if (whereQueries.length === 0) {
-        whereQueries += `LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
-      } else {
-        whereQueries += `AND LOWER(product.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%' `
-      }
     }
 
     if (query['sortBy']) {
@@ -398,6 +418,16 @@ export class ProductService {
       return productFilters
     }
     if (query['keyword'] && !query['c']) {
+      let documentQryString = ''
+      const keywordArr = query['keyword'][0].trim().split(' ')
+      keywordArr.forEach((word, i) => {
+        if (i < keywordArr.length - 1) {
+          documentQryString += `${word}:* & `
+        } else {
+          documentQryString += `${word}:*`
+        }
+      })
+
       const product = await this.productRepository
         .createQueryBuilder('pd')
         .leftJoinAndSelect('pd.category', 'category')
@@ -405,8 +435,9 @@ export class ProductService {
         .leftJoinAndSelect('attributeSet.attributeSetValueMappings', 'attributeSetValueMappings')
         .leftJoinAndSelect('attributeSetValueMappings.attributeValue', 'attributeValue')
         .leftJoinAndSelect('attributeValue.attribute', 'attribute')
-        .where(`LOWER(pd.product_name) LIKE '%${query['keyword'][0].toLowerCase()}%'`)
+        .where(`document @@ to_tsquery('${documentQryString}')`)
         .getOne()
+
       if (!product) return []
       const attributeSet = product.category.attributeSet
       const categoryDetails = await this.categoryService.getCategoryDetails(product.category.id, null)

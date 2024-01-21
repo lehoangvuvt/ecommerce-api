@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Column, Entity, In, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import Category from './category.entity'
 import ProductVariance from './product-variance.entity'
@@ -33,6 +33,10 @@ class Product extends CustomBase {
   @Column({ type: 'varchar', nullable: false, unique: true })
   @Index()
   slug: string
+
+  @Index()
+  @Column({ type: 'tsvector', nullable: true })
+  document: string
 
   @ManyToOne(() => Category, (category) => category.products, { eager: true })
   @JoinColumn({ name: 'category_id' })
