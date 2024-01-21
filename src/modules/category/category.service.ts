@@ -69,8 +69,9 @@ export class CategoryService {
     return path
   }
 
-  async getCategoryDetails(categoryId: string): Promise<CategoryDetailsDTO> {
-    const category = await this.categoryRepository.findOne({ where: { id: categoryId } })
+  async getCategoryDetails(categoryId: string, slug: string): Promise<CategoryDetailsDTO> {
+    const query = categoryId ? { id: categoryId } : { slug }
+    const category = await this.categoryRepository.findOne({ where: query })
     if (!category) return null
     const categoryDetails: CategoryDetailsDTO = {
       brands: [],

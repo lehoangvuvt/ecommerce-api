@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common'
 import { UserService } from './user.service'
 import { Response } from 'express'
-import { ApiBody, ApiCreatedResponse, ApiParam, ApiResponse } from '@nestjs/swagger'
+import { ApiBody, ApiCreatedResponse, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
 import CreateUserDTO from 'src/dtos/create-user.dto'
 import User from 'src/entities/user.entity'
 import AuthService from '../auth/auth.service'
@@ -11,6 +11,7 @@ import Cart from 'src/entities/cart.entity'
 import { TokenVerifyGuard } from '../auth/tokenVerify.guard'
 import RemoveFromCartDTO from 'src/dtos/remove-from-cart.dto'
 
+@ApiTags('User')
 @Controller('users')
 export class UserController {
   constructor(private readonly service: UserService, private readonly authService: AuthService) {}
@@ -104,16 +105,16 @@ export class UserController {
   @Get('authentication')
   async anthentication(@Req() request: any, @Res() res: Response) {
     if (!request.cookies || !request.cookies['access_token']) return res.status(401).json({ error: 'Authentication failed' })
-    
+
     const accessToken = request.cookies['access_token']
     const refreshToken = request.cookies['refresh_token']
-    
+
     const validateAccessToken = await this.authService.validateToken('access_token', accessToken)
     if (validateAccessToken) return res.status(200).json({ ...validateAccessToken, accessToken, refreshToken })
-   
+
     const validateRfToken = await this.authService.validateToken('refresh_token', refreshToken)
     if (!validateRfToken) return res.status(401).json({ error: 'Authentication failed' })
-   
+
     const newAccessToken = await this.authService.signToken('access_token', { _id: validateRfToken.id })
     res.cookie('access_token', newAccessToken, tokenConfig.accessToken.cookieOptions)
     return res.status(200).json({

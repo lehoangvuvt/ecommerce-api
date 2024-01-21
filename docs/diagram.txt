@@ -184,6 +184,23 @@ Table category_brand {
   category_id varchar
 }
 
+Table checkout {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  user_id varchar
+  status int
+}
+
+Table checkout_item {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  checkout_id varchar
+  product_variance_id varchar
+  quantity integer
+}
+
 Ref: attribute_set.id < product_variance.attribute_set_id  
 Ref: attribute_set.id < category.attribute_set_id
 Ref: attribute_set_value_mapping.attribute_set_id > attribute_set.id  
@@ -207,3 +224,6 @@ Ref: product.brand_id > brand.id
 Ref: category_brand.category_id > category.id
 Ref: category_brand.brand_id > brand.id
 Ref: product.attribute_set_id > attribute_set.id
+Ref: checkout.user_id > user.id
+Ref: checkout_item.checkout_id > checkout.id
+Ref: checkout_item.product_variance_id > product_variance.id

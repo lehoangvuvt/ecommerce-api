@@ -364,8 +364,10 @@ export class ProductService {
     if (query['c']) {
       const categorySlugs = query['c']
       const categories = await this.categoryRepository.findBy({ slug: In(categorySlugs) })
+      if (categories.length === 0) return []
       const attributeSet = categories[0].attributeSet
-      const categoryDetails = await this.categoryService.getCategoryDetails(categories[0].id)
+      if (!attributeSet) return []
+      const categoryDetails = await this.categoryService.getCategoryDetails(categories[0].id, null)
       categoryDetails.brands.forEach((brand) => {
         productFilters.brands.values.push(brand.brand_name)
       })
@@ -407,7 +409,7 @@ export class ProductService {
         .getOne()
       if (!product) return []
       const attributeSet = product.category.attributeSet
-      const categoryDetails = await this.categoryService.getCategoryDetails(product.category.id)
+      const categoryDetails = await this.categoryService.getCategoryDetails(product.category.id, null)
       categoryDetails.brands.forEach((brand) => {
         productFilters.brands.values.push(brand.brand_name)
       })

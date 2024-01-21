@@ -31,6 +31,8 @@ import { CategoryBrandModule } from './modules/category-brand/category-brand.mod
 import { AttributeModule } from './modules/attribute/attribute.module'
 import { DataSource } from 'typeorm'
 import { AuthModule } from './modules/auth/auth.module'
+import Checkout from './entities/checkout.entity'
+import CheckoutItem from './entities/checkout-item.entity'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -61,6 +63,8 @@ import { AuthModule } from './modules/auth/auth.module'
         ProductPriceHistory,
         Cart,
         CartItem,
+        Checkout,
+        CheckoutItem
       ],
       synchronize: true,
     }),

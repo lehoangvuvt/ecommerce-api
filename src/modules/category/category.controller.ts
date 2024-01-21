@@ -24,7 +24,16 @@ export class CategoryController {
   @ApiParam({ name: 'id', type: String })
   @Get('/:id')
   async getCategoryDetails(@Param() params: { id: string }, @Res() res: Response) {
-    const response = await this.service.getCategoryDetails(params.id)
+    const response = await this.service.getCategoryDetails(params.id, null)
+    if (!response) return res.status(400).json({ error: 'Not found' })
+    return res.status(200).json(response)
+  }
+
+  @ApiResponse({ status: 200, type: CategoryDetails })
+  @ApiParam({ name: 'slug', type: String })
+  @Get('/slug/:slug')
+  async getCategoryDetailsBySlug(@Param() params: { slug: string }, @Res() res: Response) {
+    const response = await this.service.getCategoryDetails(null, params.slug)
     if (!response) return res.status(400).json({ error: 'Not found' })
     return res.status(200).json(response)
   }

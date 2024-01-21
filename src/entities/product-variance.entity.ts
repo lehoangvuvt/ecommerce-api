@@ -1,12 +1,12 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm'
 import CustomBase from './base'
 import Product from './product.entity'
 import ProductImage from './product-variance-image.entity'
 import ProductPriceHistory from './product-price-history.entity'
 import CartItem from './cart-item.entity'
 import OrderItem from './order-item.entity'
-import ProductVarianceImage from './product-variance-image.entity'
 import AttributeSet from './attribute-set.entity'
+import CheckoutItem from './checkout-item.entity'
 
 @Entity()
 class ProductVariance extends CustomBase {
@@ -38,6 +38,9 @@ class ProductVariance extends CustomBase {
   @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.productVariances, { eager: true })
   @JoinColumn({ name: 'attribute_set_id' })
   attributeSet: AttributeSet
+
+  @OneToOne(() => CheckoutItem, (checkoutItem) => checkoutItem.productVariance)
+  checkoutItems: CheckoutItem[]
 }
 
 export default ProductVariance
