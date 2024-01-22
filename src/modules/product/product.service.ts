@@ -5,7 +5,7 @@ import AttributeSet from 'src/entities/attribute-set.entity'
 import Attribute from 'src/entities/attribute.entity'
 import Category from 'src/entities/category.entity'
 import Product from 'src/entities/product.entity'
-import { DataSource, EntityManager, ILike, In, Like, Repository, getManager } from 'typeorm'
+import { DataSource, EntityManager, ILike, In, Like, Not, Repository, getManager } from 'typeorm'
 import { AttributeService } from '../attribute/attribute.service'
 import ProductVariance from 'src/entities/product-variance.entity'
 import ProductImage from 'src/entities/product-image.entity'
@@ -15,6 +15,9 @@ import { slugGenerator } from 'src/utils/utils'
 import { CategoryService } from '../category/category.service'
 import { TPagingListResponse } from 'src/types/response.types'
 import Brand from 'src/entities/brand.entity'
+import { NotEquals } from 'class-validator'
+import { KeywordService } from '../keyword/keyword.service'
+import Keyword from 'src/entities/keyword.entity'
 
 @Injectable()
 export class ProductService {
@@ -27,15 +30,39 @@ export class ProductService {
     @InjectRepository(ProductVarianceImage) private productVarianceImageRepository: Repository<ProductVarianceImage>,
     @InjectRepository(ProductPriceHistory) private productPriceHistoryRepository: Repository<ProductPriceHistory>,
     @InjectRepository(Category) private categoryRepository: Repository<Category>,
+    @InjectRepository(Keyword) private keywordRepository: Repository<Keyword>,
     @Inject(AttributeService) private attributeService: AttributeService,
     @Inject(CategoryService) private categoryService: CategoryService,
-
+    @Inject(KeywordService) private keywordService: KeywordService,
     private datasource: DataSource
   ) {}
 
   async getAllProducts() {
     const result = await this.productRepository.find()
     return result
+  }
+
+  async getFixedKeyword(keyword: string): Promise<string> {
+    const keywordArr = keyword.trim().split(' ')
+    let fixedKeyword = ''
+    const getFixedKeyword = keywordArr.map(async (kWord) => {
+      const fixedWord = await this.keywordRepository
+        .createQueryBuilder('keyword')
+        .select('keyword')
+        .addSelect(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal)`)
+        .where(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal) >= 0.5`)
+        .orderBy(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal)`, 'DESC')
+        .getOne()
+      if (fixedWord) {
+        fixedKeyword += `${fixedWord.word} `
+      } else {
+        fixedKeyword += `${kWord} `
+      }
+    })
+
+    await Promise.all(getFixedKeyword)
+
+    return fixedKeyword.trim()
   }
 
   async getProductDetails(slug: string): Promise<Product> {
@@ -181,16 +208,20 @@ export class ProductService {
         const createProductVarianceImageRes = await newProductVarianceImage.save()
       })
     })
-    const category = await this.categoryRepository.findOne({ where: { id: category_id } })
-    const brand = await this.brandRepository.findOne({ where: { id: brand_id } })
-    await this.entityManager.query(`
+    const createdProduct = await this.productRepository.findOne({ where: { id: createProductRes.id } })
+
+    const updateFTSRes = await this.entityManager.query(`
     UPDATE product
     SET document = setweight(to_tsvector(product_name), 'A') 
-    || setweight(to_tsvector('${category.category_name}'), 'B')
-    || setweight(to_tsvector('${brand.brand_name}'), 'C')
-    || setweight(to_tsvector(slug), 'D')
+    || setweight(to_tsvector('${createdProduct.category.category_name}'), 'B')
+    || setweight(to_tsvector('${createdProduct.brand.brand_name}'), 'C')
     WHERE id='${createProductRes.id}'
     `)
+
+    const updatedProduct = await this.productRepository.findOne({ where: { id: createProductRes.id } })
+
+    const insertWordsRes = await this.keywordService.insertWords(updatedProduct.document)
+
     return createProductRes
   }
 
@@ -208,15 +239,17 @@ export class ProductService {
     let whereQueries = ''
     let documentQryString = ''
     if (query['keyword']) {
-      const keywordArr = query['keyword'][0].trim().split(' ')
-      keywordArr.forEach((word, i) => {
-        if (i < keywordArr.length - 1) {
-          documentQryString += `${word}:* & `
+      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
+      const fixedKeywordArr = fixedKeyword.split(' ')
+      fixedKeywordArr.forEach((word, i) => {
+        if (i < fixedKeywordArr.length - 1) {
+          documentQryString += `${word} & `
         } else {
-          documentQryString += `${word}:*`
+          documentQryString += `${word}`
         }
       })
       whereQueries += `document @@ to_tsquery('${documentQryString}')`
+      baseQuery.addSelect(`ts_rank("product"."document", to_tsquery('${documentQryString}'))`, 'rank')
     }
 
     if (Object.keys(query).some((key) => key.includes('attribute_'))) {
@@ -228,7 +261,12 @@ export class ProductService {
           inValuesQuery += `'${id}',`
         })
         inValuesQuery = inValuesQuery.substring(0, inValuesQuery.length - 1) + ')'
-        whereQueries += `AND product.attribute_set_id ${inValuesQuery} `
+
+        if (documentQryString.length > 0) {
+          whereQueries += `AND product.attribute_set_id ${inValuesQuery} `
+        } else {
+          whereQueries += `product.attribute_set_id ${inValuesQuery} `
+        }
       } else {
         return {
           current_page: parseInt(query['page'][0]),
@@ -271,26 +309,30 @@ export class ProductService {
       }
       delete query['brands']
     }
+    baseQuery.where(whereQueries)
+
+    if (documentQryString.length > 0) {
+      baseQuery.addOrderBy(`rank`, 'DESC')
+    }
 
     if (query['sortBy']) {
       switch (query['sortBy'][0]) {
         case 'ctime':
-          baseQuery.orderBy('product.createdAt', 'DESC')
+          baseQuery.addOrderBy('product.createdAt', 'DESC')
           break
         case 'pop':
-          baseQuery.orderBy('product.createdAt', 'DESC')
+          baseQuery.addOrderBy('product.createdAt', 'DESC')
           break
         case 'sales':
-          baseQuery.orderBy('product.createdAt', 'DESC')
+          baseQuery.addOrderBy('product.createdAt', 'DESC')
           break
       }
     }
 
-    baseQuery.where(whereQueries)
     let total = await baseQuery.getCount()
-    total *= 300
+
     baseQuery.take(itemsPerPage)
-    // baseQuery.skip(parseInt(query['page'][0]))
+    baseQuery.skip(parseInt(query['page'][0]))
     const result = await baseQuery.getMany()
     const total_page = Math.ceil(total / itemsPerPage)
     const current_page = parseInt(query['page'][0])
@@ -316,12 +358,7 @@ export class ProductService {
         resultWithPrices[index]['prices'].push(variance.productPriceHistories[0].price)
       })
       return {
-        data: Array(30)
-          .fill(resultWithPrices[0])
-          .map((item: Product, i) => {
-            item.id = item.id + i * (parseInt(query['page'][0]) + 1)
-            return item
-          }),
+        data: resultWithPrices,
         current_page: parseInt(query['page'][0]),
         has_next,
         total,
@@ -419,15 +456,15 @@ export class ProductService {
     }
     if (query['keyword'] && !query['c']) {
       let documentQryString = ''
-      const keywordArr = query['keyword'][0].trim().split(' ')
-      keywordArr.forEach((word, i) => {
-        if (i < keywordArr.length - 1) {
-          documentQryString += `${word}:* & `
+      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
+      const fixedKeywordArr = fixedKeyword.split(' ')
+      fixedKeywordArr.forEach((word, i) => {
+        if (i < fixedKeywordArr.length - 1) {
+          documentQryString += `${word} & `
         } else {
-          documentQryString += `${word}:*`
+          documentQryString += `${word}`
         }
       })
-
       const product = await this.productRepository
         .createQueryBuilder('pd')
         .leftJoinAndSelect('pd.category', 'category')
@@ -470,5 +507,32 @@ export class ProductService {
       })
       return productFilters
     }
+  }
+
+  async getSimilarProducts(slug: string): Promise<Product[]> {
+    const product = await this.productRepository.findOne({ where: { slug } })
+    if (!product) return null
+    const categoryId = product.category.id
+    const result = await this.productRepository.find({ where: { category_id: categoryId, id: Not(product.id) }, take: 10 })
+    let similarProducts = result.map((product) => {
+      product['product_images'] = product.images.map((image) => {
+        return image.image_url
+      })
+      delete product.images
+      product['prices'] = []
+      return product
+    })
+
+    const productIds = result.map((product) => {
+      return product.id
+    })
+
+    const variances = await this.productVarianceRepository.findBy({ product_id: In(productIds) })
+    variances.forEach((variance) => {
+      const productId = variance.product_id
+      const index = similarProducts.findIndex((product) => product.id === productId)
+      similarProducts[index]['prices'].push(variance.productPriceHistories[0].price)
+    })
+    return similarProducts
   }
 }

@@ -33,6 +33,8 @@ import { DataSource } from 'typeorm'
 import { AuthModule } from './modules/auth/auth.module'
 import Checkout from './entities/checkout.entity'
 import CheckoutItem from './entities/checkout-item.entity'
+import Keyword from './entities/keyword.entity'
+import { KeywordModule } from './modules/keyword/keyword.module'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -64,7 +66,8 @@ import CheckoutItem from './entities/checkout-item.entity'
         Cart,
         CartItem,
         Checkout,
-        CheckoutItem
+        CheckoutItem,
+        Keyword,
       ],
       synchronize: true,
     }),
@@ -75,7 +78,8 @@ import CheckoutItem from './entities/checkout-item.entity'
     BrandModule,
     CategoryBrandModule,
     AttributeModule,
-    AuthModule
+    AuthModule,
+    KeywordModule,
   ],
   controllers: [AppController],
   providers: [AppService],

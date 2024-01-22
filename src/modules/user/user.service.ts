@@ -115,7 +115,6 @@ export class UserService {
 
   async addToCart(addToCartDTO: AddToCartDTO, user_id: string): Promise<Cart> {
     const { product_variance_id, quantity } = addToCartDTO
-    console.log(user_id)
     const existedCart = await this.cartRepository.findOne({ where: { user_id } })
     let cart: Cart = null
     if (!existedCart) {

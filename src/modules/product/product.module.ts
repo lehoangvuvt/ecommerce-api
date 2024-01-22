@@ -16,6 +16,8 @@ import ProductVarianceImage from 'src/entities/product-variance-image.entity'
 import { CategoryService } from '../category/category.service'
 import CategoryBrand from 'src/entities/category-brand.entity'
 import Brand from 'src/entities/brand.entity'
+import Keyword from 'src/entities/keyword.entity'
+import { KeywordService } from '../keyword/keyword.service'
 
 @Module({
   controllers: [ProductController],
@@ -33,8 +35,9 @@ import Brand from 'src/entities/brand.entity'
       Category,
       CategoryBrand,
       Brand,
+      Keyword,
     ]),
   ],
-  providers: [ProductService, AttributeService, CategoryService],
+  providers: [ProductService, AttributeService, CategoryService, KeywordService],
 })
 export class ProductModule {}

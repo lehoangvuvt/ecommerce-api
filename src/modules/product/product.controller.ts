@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common'
 import { ProductService } from './product.service'
 import { Response } from 'express'
-import { ApiBody, ApiCreatedResponse, ApiParam, ApiTags } from '@nestjs/swagger'
+import { ApiBody, ApiCreatedResponse, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
 import CreateProductDTO from 'src/dtos/create-product.dto'
 import Product from 'src/entities/product.entity'
 
@@ -44,5 +44,13 @@ export class ProductController {
     const response = await this.service.createProduct(createProductDTO)
     if (!response) return res.status(401).json({ error: 'Something error' })
     return res.status(201).json(response)
+  }
+
+  @ApiResponse({ type: [Product], status: 200 })
+  @ApiParam({ type: String, name: 'slug' })
+  @Get('/similar-products/:slug')
+  async getSimilarProducts(@Param() param: { slug: string }, @Res() res: Response) {
+    const response = await this.service.getSimilarProducts(param.slug)
+    return res.status(200).json(response)
   }
 }

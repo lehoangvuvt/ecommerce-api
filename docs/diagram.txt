@@ -14,6 +14,13 @@ Table product {
   slug varchar [unique]
 }
 
+Table keyword {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  word varchar [unique]
+}
+
 Table product_image {
   id varchar [PK]
   createdAt datetime
