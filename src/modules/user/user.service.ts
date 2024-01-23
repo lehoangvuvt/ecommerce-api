@@ -17,7 +17,7 @@ export class UserService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Cart) private cartRepository: Repository<Cart>,
     @InjectRepository(CartItem) private cartItemRepository: Repository<CartItem>,
-    @InjectRepository(Product) private productRepository: Repository<Product>
+    @InjectRepository(Product) private productRepository: Repository<Product>,
   ) {}
 
   async getAll(): Promise<Array<User>> {

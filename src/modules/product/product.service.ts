@@ -1,8 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import CreateProductDTO from 'src/dtos/create-product.dto'
-import AttributeSet from 'src/entities/attribute-set.entity'
-import Attribute from 'src/entities/attribute.entity'
 import Category from 'src/entities/category.entity'
 import Product from 'src/entities/product.entity'
 import { DataSource, EntityManager, ILike, In, Like, Not, Repository, getManager } from 'typeorm'
@@ -11,12 +9,11 @@ import ProductVariance from 'src/entities/product-variance.entity'
 import ProductImage from 'src/entities/product-image.entity'
 import ProductPriceHistory from 'src/entities/product-price-history.entity'
 import ProductVarianceImage from 'src/entities/product-variance-image.entity'
-import { slugGenerator } from 'src/utils/utils'
+import { removeDiacriticalMarks, slugGenerator } from 'src/utils/utils'
 import { CategoryService } from '../category/category.service'
 import { TPagingListResponse } from 'src/types/response.types'
 import Brand from 'src/entities/brand.entity'
-import { NotEquals } from 'class-validator'
-import { KeywordService } from '../keyword/keyword.service'
+import { SearchService } from '../search/search.service'
 import Keyword from 'src/entities/keyword.entity'
 
 @Injectable()
@@ -33,7 +30,7 @@ export class ProductService {
     @InjectRepository(Keyword) private keywordRepository: Repository<Keyword>,
     @Inject(AttributeService) private attributeService: AttributeService,
     @Inject(CategoryService) private categoryService: CategoryService,
-    @Inject(KeywordService) private keywordService: KeywordService,
+    @Inject(SearchService) private searchService: SearchService,
     private datasource: DataSource
   ) {}
 
@@ -49,9 +46,16 @@ export class ProductService {
       const fixedWord = await this.keywordRepository
         .createQueryBuilder('keyword')
         .select('keyword')
-        .addSelect(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal)`)
-        .where(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal) >= 0.5`)
-        .orderBy(`((length(word) - levenshtein("keyword"."word", '${kWord}')) / length(word)::decimal)`, 'DESC')
+        .addSelect(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`
+        )
+        .where(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal) >= 0.5`
+        )
+        .orderBy(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`,
+          'DESC'
+        )
         .getOne()
       if (fixedWord) {
         fixedKeyword += `${fixedWord.word} `
@@ -212,7 +216,7 @@ export class ProductService {
 
     const updateFTSRes = await this.entityManager.query(`
     UPDATE product
-    SET document = setweight(to_tsvector(product_name), 'A') 
+    SET document = setweight(to_tsvector(${removeDiacriticalMarks(createProductDTO.product_name)}), 'A') 
     || setweight(to_tsvector('${createdProduct.category.category_name}'), 'B')
     || setweight(to_tsvector('${createdProduct.brand.brand_name}'), 'C')
     WHERE id='${createProductRes.id}'
@@ -220,7 +224,7 @@ export class ProductService {
 
     const updatedProduct = await this.productRepository.findOne({ where: { id: createProductRes.id } })
 
-    const insertWordsRes = await this.keywordService.insertWords(updatedProduct.document)
+    const insertWordsRes = await this.searchService.insertWords(updatedProduct.document)
 
     return createProductRes
   }
@@ -239,6 +243,7 @@ export class ProductService {
     let whereQueries = ''
     let documentQryString = ''
     if (query['keyword']) {
+      this.searchService.insertSearchTerm(query['keyword'][0])
       const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
       const fixedKeywordArr = fixedKeyword.split(' ')
       fixedKeywordArr.forEach((word, i) => {
@@ -332,7 +337,11 @@ export class ProductService {
     let total = await baseQuery.getCount()
 
     baseQuery.take(itemsPerPage)
-    baseQuery.skip(parseInt(query['page'][0]))
+    if (query['page']) {
+      baseQuery.skip(parseInt(query['page'][0]))
+    } else {
+      baseQuery.skip(0)
+    }
     const result = await baseQuery.getMany()
     const total_page = Math.ceil(total / itemsPerPage)
     const current_page = parseInt(query['page'][0])

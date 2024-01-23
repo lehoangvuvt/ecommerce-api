@@ -34,7 +34,8 @@ import { AuthModule } from './modules/auth/auth.module'
 import Checkout from './entities/checkout.entity'
 import CheckoutItem from './entities/checkout-item.entity'
 import Keyword from './entities/keyword.entity'
-import { KeywordModule } from './modules/keyword/keyword.module'
+import { SearchModule } from './modules/search/search.module'
+import SearchTerm from './entities/search-tearm.entity'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -68,6 +69,7 @@ import { KeywordModule } from './modules/keyword/keyword.module'
         Checkout,
         CheckoutItem,
         Keyword,
+        SearchTerm,
       ],
       synchronize: true,
     }),
@@ -79,7 +81,7 @@ import { KeywordModule } from './modules/keyword/keyword.module'
     CategoryBrandModule,
     AttributeModule,
     AuthModule,
-    KeywordModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

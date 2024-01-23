@@ -17,7 +17,8 @@ import { CategoryService } from '../category/category.service'
 import CategoryBrand from 'src/entities/category-brand.entity'
 import Brand from 'src/entities/brand.entity'
 import Keyword from 'src/entities/keyword.entity'
-import { KeywordService } from '../keyword/keyword.service'
+import { SearchService } from '../search/search.service'
+import SearchTerm from 'src/entities/search-tearm.entity'
 
 @Module({
   controllers: [ProductController],
@@ -36,8 +37,9 @@ import { KeywordService } from '../keyword/keyword.service'
       CategoryBrand,
       Brand,
       Keyword,
+      SearchTerm,
     ]),
   ],
-  providers: [ProductService, AttributeService, CategoryService, KeywordService],
+  providers: [ProductService, AttributeService, CategoryService, SearchService],
 })
 export class ProductModule {}
