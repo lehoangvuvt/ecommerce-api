@@ -2,8 +2,6 @@ import { Global, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import AssignAttributeSetDTO from 'src/dtos/assign-attribute-set.dto'
 import CategoryDetailsDTO from 'src/dtos/category-details.dto'
-import CreateAttributeSetDTO from 'src/dtos/create-attribute-set.dto'
-import CreateCategoryAttributeDTO from 'src/dtos/create-category-attribute.dto'
 import CreateCategoryDTO from 'src/dtos/create-category.dto'
 import AttributeSet from 'src/entities/attribute-set.entity'
 import Brand from 'src/entities/brand.entity'
@@ -165,7 +163,7 @@ export class CategoryService {
       const newCategory = this.categoryRepository.create({
         category_name: createCategoryDTO.category_name,
         parentCategory,
-        slug: slugGenerator(createCategoryDTO.category_name),
+        slug: slugGenerator(createCategoryDTO.category_name, 'category'),
       })
       const result = await newCategory.save()
       return result

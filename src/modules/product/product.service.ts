@@ -15,6 +15,7 @@ import { TPagingListResponse } from 'src/types/response.types'
 import Brand from 'src/entities/brand.entity'
 import { SearchService } from '../search/search.service'
 import Keyword from 'src/entities/keyword.entity'
+import Store from 'src/entities/store.entity'
 
 @Injectable()
 export class ProductService {
@@ -28,6 +29,7 @@ export class ProductService {
     @InjectRepository(ProductPriceHistory) private productPriceHistoryRepository: Repository<ProductPriceHistory>,
     @InjectRepository(Category) private categoryRepository: Repository<Category>,
     @InjectRepository(Keyword) private keywordRepository: Repository<Keyword>,
+    @InjectRepository(Store) private storeRepository: Repository<Store>,
     @Inject(AttributeService) private attributeService: AttributeService,
     @Inject(CategoryService) private categoryService: CategoryService,
     @Inject(SearchService) private searchService: SearchService,
@@ -113,6 +115,9 @@ export class ProductService {
     result['product_variance'] = productVariance
     const categoryPath = await this.categoryService.getCategoryPath(result.category_id)
     result['category_path'] = categoryPath
+    const productStore = await this.storeRepository.findOne({ where: { id: result.store_id } })
+    delete productStore.products
+    result['store'] = productStore
     return result
   }
 
@@ -146,7 +151,7 @@ export class ProductService {
       description,
       product_name,
       attribute_set_id: productAttributeSet.id,
-      slug: slugGenerator(product_name),
+      slug: slugGenerator(product_name, 'product'),
     })
     const createProductRes = await newProduct.save()
 
@@ -243,7 +248,6 @@ export class ProductService {
     let whereQueries = ''
     let documentQryString = ''
     if (query['keyword']) {
-      this.searchService.insertSearchTerm(query['keyword'][0])
       const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
       const fixedKeywordArr = fixedKeyword.split(' ')
       fixedKeywordArr.forEach((word, i) => {
@@ -314,6 +318,16 @@ export class ProductService {
       }
       delete query['brands']
     }
+
+    if (query['store']) {
+      if (whereQueries.length === 0) {
+        whereQueries += `product.store_id = ${query['store'][0]} `
+      } else {
+        whereQueries += `AND product.store_id = ${query['store'][0]} `
+      }
+      delete query['store']
+    }
+
     baseQuery.where(whereQueries)
 
     if (documentQryString.length > 0) {
@@ -347,6 +361,14 @@ export class ProductService {
     const current_page = parseInt(query['page'][0])
     const has_next = current_page + 1 < total_page
     if (result.length > 0) {
+      if (query['keyword']) {
+        try {
+          this.searchService.insertSearchTerm(query['keyword'][0])
+        } catch (err) {
+          console.log('error in insert search term')
+        }
+      }
+
       let resultWithPrices = result.map((product) => {
         product['product_images'] = product.images.map((image) => {
           return image.image_url

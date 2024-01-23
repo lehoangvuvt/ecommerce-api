@@ -19,6 +19,7 @@ import Brand from 'src/entities/brand.entity'
 import Keyword from 'src/entities/keyword.entity'
 import { SearchService } from '../search/search.service'
 import SearchTerm from 'src/entities/search-tearm.entity'
+import Store from 'src/entities/store.entity'
 
 @Module({
   controllers: [ProductController],
@@ -38,6 +39,7 @@ import SearchTerm from 'src/entities/search-tearm.entity'
       Brand,
       Keyword,
       SearchTerm,
+      Store
     ]),
   ],
   providers: [ProductService, AttributeService, CategoryService, SearchService],

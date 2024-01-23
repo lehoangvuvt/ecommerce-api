@@ -6,6 +6,7 @@ import Brand from './brand.entity'
 import ProductImage from './product-image.entity'
 import { ApiProperty } from '@nestjs/swagger'
 import AttributeSet from './attribute-set.entity'
+import Store from './store.entity'
 
 @Entity()
 class Product extends CustomBase {
@@ -34,6 +35,11 @@ class Product extends CustomBase {
   @Index()
   slug: string
 
+  @ApiProperty()
+  @Column({ type: 'int4', nullable: true })
+  @Index()
+  store_id: number
+
   @Index()
   @Column({ type: 'tsvector', nullable: true })
   document: string
@@ -55,6 +61,10 @@ class Product extends CustomBase {
   @ManyToOne(() => AttributeSet, (attributeSet) => attributeSet.products, { eager: true })
   @JoinColumn({ name: 'attribute_set_id' })
   attributeSet: AttributeSet
+
+  @ManyToOne(() => Store, (store) => store.products)
+  @JoinColumn({ name: 'store_id' })
+  store: Store
 }
 
 export default Product

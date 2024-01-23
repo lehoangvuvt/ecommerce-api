@@ -12,6 +12,7 @@ Table product {
   brand_id varchar
   attribute_set_id varchar
   slug varchar [unique]
+  store_id varchar
 }
 
 Table keyword {
@@ -19,6 +20,14 @@ Table keyword {
   createdAt datetime
   updatedAt datetime
   word varchar [unique]
+}
+
+Table search_term {
+  id varchar [PK]
+  createdAt datetime
+  updatedAt datetime
+  term varchar
+  count int
 }
 
 Table product_image {
@@ -191,21 +200,15 @@ Table category_brand {
   category_id varchar
 }
 
-Table checkout {
-  id varchar [PK]
+Table store {
+  id number [PK]
   createdAt datetime
   updatedAt datetime
-  user_id varchar
-  status int
-}
-
-Table checkout_item {
-  id varchar [PK]
-  createdAt datetime
-  updatedAt datetime
-  checkout_id varchar
-  product_variance_id varchar
-  quantity integer
+  url varchar [unique]
+  name varchar
+  avatar_url varchar
+  background_url varchar
+  banner_url varchar
 }
 
 Ref: attribute_set.id < product_variance.attribute_set_id  
@@ -231,6 +234,4 @@ Ref: product.brand_id > brand.id
 Ref: category_brand.category_id > category.id
 Ref: category_brand.brand_id > brand.id
 Ref: product.attribute_set_id > attribute_set.id
-Ref: checkout.user_id > user.id
-Ref: checkout_item.checkout_id > checkout.id
-Ref: checkout_item.product_variance_id > product_variance.id
+Ref: product.store_id > store.id

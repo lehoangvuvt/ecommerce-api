@@ -36,6 +36,8 @@ import CheckoutItem from './entities/checkout-item.entity'
 import Keyword from './entities/keyword.entity'
 import { SearchModule } from './modules/search/search.module'
 import SearchTerm from './entities/search-tearm.entity'
+import Store from './entities/store.entity'
+import { StoreModule } from './modules/store/store.module'
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -70,6 +72,7 @@ import SearchTerm from './entities/search-tearm.entity'
         CheckoutItem,
         Keyword,
         SearchTerm,
+        Store,
       ],
       synchronize: true,
     }),
@@ -82,6 +85,7 @@ import SearchTerm from './entities/search-tearm.entity'
     AttributeModule,
     AuthModule,
     SearchModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
