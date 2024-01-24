@@ -35,7 +35,7 @@ export default class AuthService {
       if (!decoded) {
         return false
       } else {
-        const userId = decoded._id
+        const userId = decoded.id
         const result = await this.userService.getUserByIdAuthentication(userId)
         if (!result) return false
         return result

@@ -16,7 +16,7 @@ export class TokenVerifyGuard implements CanActivate {
         if (!decoded) {
           return false
         } else {
-          request.id = decoded._id
+          request.id = decoded.id
           return true
         }
       } catch (error) {
