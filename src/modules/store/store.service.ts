@@ -15,6 +15,26 @@ export class StoreService {
 
   async getStoreDetails(url: string): Promise<Store> {
     const store = await this.storeRepository.findOne({ where: { url } })
+    delete store.products
+    store['overview'] = await this.getStoreOverview(store.id)
+    return store
+  }
+
+  async getStoreOverview(storeId: number): Promise<Store> {
+    const store = await this.storeRepository.findOne({ where: { id: storeId } })
+    store['total_products_count'] = store.products.length
+    const categoryTabs: { slug: string; name: string }[] = []
+    store.products.forEach((product) => {
+      const slug = product.category.slug
+      const name = product.category.category_name
+      if (categoryTabs.findIndex((category) => category.slug === slug) === -1) {
+        categoryTabs.push({ name, slug })
+      }
+    })
+    store['category_tabs'] = categoryTabs
+    store['total_ratings_count'] = 300
+    store['total_followers_count'] = 120
+    delete store.products
     return store
   }
 

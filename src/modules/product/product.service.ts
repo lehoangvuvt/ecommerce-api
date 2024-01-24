@@ -115,9 +115,6 @@ export class ProductService {
     result['product_variance'] = productVariance
     const categoryPath = await this.categoryService.getCategoryPath(result.category_id)
     result['category_path'] = categoryPath
-    const productStore = await this.storeRepository.findOne({ where: { id: result.store_id } })
-    delete productStore.products
-    result['store'] = productStore
     return result
   }
 
@@ -261,6 +258,8 @@ export class ProductService {
       baseQuery.addSelect(`ts_rank("product"."document", to_tsquery('${documentQryString}'))`, 'rank')
     }
 
+
+
     if (Object.keys(query).some((key) => key.includes('attribute_'))) {
       const attributeEntries = Object.entries(query).filter((entry) => entry[0].includes('attribute_'))
       const setIds = await this.getAttributeSetIdsBaseOnQuery(attributeEntries)
@@ -361,14 +360,6 @@ export class ProductService {
     const current_page = parseInt(query['page'][0])
     const has_next = current_page + 1 < total_page
     if (result.length > 0) {
-      if (query['keyword']) {
-        try {
-          this.searchService.insertSearchTerm(query['keyword'][0])
-        } catch (err) {
-          console.log('error in insert search term')
-        }
-      }
-
       let resultWithPrices = result.map((product) => {
         product['product_images'] = product.images.map((image) => {
           return image.image_url

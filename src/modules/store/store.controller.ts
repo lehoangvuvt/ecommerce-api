@@ -14,9 +14,17 @@ export class StoreController {
   @ApiResponse({ type: Store, status: 200 })
   @Get('/:url')
   async getStoreDetails(@Param() params: { url: string }, @Res() res: Response) {
-    console.log(params.url)
     const response = await this.service.getStoreDetails(params.url)
     if (!response) return res.status(404).json({ error: 'Not find any store with given url' })
+    return res.status(200).json(response)
+  }
+
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ type: Store, status: 200 })
+  @Get('/overview/:id')
+  async getStoreOverview(@Param() params: { id: number }, @Res() res: Response) {
+    const response = await this.service.getStoreOverview(params.id)
+    if (!response) return res.status(404).json({ error: 'Not find any store with given id' })
     return res.status(200).json(response)
   }
 
