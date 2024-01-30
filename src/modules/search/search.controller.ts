@@ -20,4 +20,11 @@ export class SearchController {
     const response = await this.service.getPopularSearchTerms()
     return res.status(200).json(response)
   }
+
+  @ApiParam({ name: 'keyword', type: String })
+  @Get('/fixed-keyword/:keyword')
+  async getFixedKeyword(@Param() params: { keyword: string }, @Res() res: Response) {
+    const fixedKeyword = await this.service.getFixedKeyword(params.keyword)
+    return res.status(200).json({ fixed: fixedKeyword })
+  }
 }

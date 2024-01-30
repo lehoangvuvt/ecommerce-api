@@ -55,6 +55,45 @@ export class SearchService {
     return suggestedTerms
   }
 
+  async getFixedKeyword(keyword: string): Promise<string> {
+    const keywordArr = keyword.toLowerCase().trim().split(' ')
+    let fixedKeyword = ''
+    const getFixedKeyword = keywordArr.map(async (kWord) => {
+      const fixedWord = await this.keywordRepository
+        .createQueryBuilder('keyword')
+        .select('keyword')
+        .addSelect(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`
+        )
+        .where(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal) >= 0.65`
+        )
+        .orderBy(
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`,
+          'DESC'
+        )
+        .getOne()
+      if (fixedWord) {
+        fixedKeyword += `${fixedWord.word} `
+      }
+    })
+
+    await Promise.all(getFixedKeyword)
+
+    const keywordWords = keyword.trim().toUpperCase().split(' ')
+    const fixedKeywordWords = fixedKeyword.trim().toUpperCase().split(' ')
+    let matchWordsCount = 0
+    fixedKeywordWords.forEach((fixWord) => {
+      if (keywordWords.includes(fixWord)) {
+        matchWordsCount++
+      }
+    })
+
+    if (fixedKeyword.trim().length === 0 || matchWordsCount === fixedKeywordWords.length) return null
+
+    return fixedKeyword.trim()
+  }
+
   async getPopularSearchTerms(): Promise<SearchTerm[]> {
     const result = await this.searchTermRepository.find({ order: { count: 'DESC' }, take: 10 })
     return result

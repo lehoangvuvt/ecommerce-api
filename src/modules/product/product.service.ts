@@ -275,7 +275,7 @@ export class ProductService {
     let whereQueries = ''
     let documentQryString = ''
     if (query['keyword']) {
-      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
+      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0].toLowerCase())
       const fixedKeywordArr = fixedKeyword.split(' ')
       fixedKeywordArr.forEach((word, i) => {
         if (i < fixedKeywordArr.length - 1) {
@@ -512,7 +512,7 @@ export class ProductService {
     }
     if (query['keyword'] && !query['c']) {
       let documentQryString = ''
-      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0])
+      const fixedKeyword = await this.getFixedKeyword(query['keyword'][0].toLowerCase())
       const fixedKeywordArr = fixedKeyword.split(' ')
       fixedKeywordArr.forEach((word, i) => {
         if (i < fixedKeywordArr.length - 1) {

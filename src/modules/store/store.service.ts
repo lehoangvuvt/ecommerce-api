@@ -27,9 +27,9 @@ export class StoreService {
     store.products.forEach((product) => {
       const slug = product.category.slug
       const name = product.category.category_name
-      if (categoryTabs.findIndex((category) => category.slug === slug) === -1) {
-        categoryTabs.push({ name, slug })
-      }
+      const index = categoryTabs.findIndex((category) => category.slug === slug)
+      if (index !== -1) return
+      categoryTabs.push({ name, slug })
     })
     store['category_tabs'] = categoryTabs
     const storeReviewStars = (await this.datasource.query(`
