@@ -405,7 +405,7 @@ export class ProductService {
           })
           return variance.productPriceHistories[0].price
         })
-        product['average_rating'] = parseFloat((totalRatings / totalRatingsCount).toFixed(1))
+        product['average_rating'] = totalRatingsCount > 0 ? parseFloat((totalRatings / totalRatingsCount).toFixed(1)) : 0
         product['total_ratings_count'] = totalRatingsCount
         delete product.productVariances
         delete product.description

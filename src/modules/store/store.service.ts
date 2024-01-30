@@ -42,7 +42,8 @@ export class StoreService {
         ON pr.product_variance_id = pv.id
         WHERE st.id=${store.id}
     `)) as { star: number }[]
-    store['average_rating'] = (storeReviewStars.reduce((prev, curr) => prev + curr.star, 0) / storeReviewStars.length).toFixed(1)
+    store['average_rating'] =
+      storeReviewStars.length > 0 ? parseFloat((storeReviewStars.reduce((prev, curr) => prev + curr.star, 0) / storeReviewStars.length).toFixed(1)) : 0
     store['total_ratings_count'] = storeReviewStars.length
     store['total_followers_count'] = 120
     delete store.products
