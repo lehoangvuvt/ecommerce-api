@@ -569,7 +569,15 @@ export class ProductService {
     const product = await this.productRepository.findOne({ where: { slug } })
     if (!product) return null
     const categoryId = product.category.id
-    const result = await this.productRepository.find({ where: { category_id: categoryId, id: Not(product.id) }, take: 10 })
+    const result = await this.productRepository.find({
+      relations: {
+        productVariances: {
+          productVarianceReviews: true,
+        },
+      },
+      where: { category_id: categoryId, id: Not(product.id) },
+      take: 10,
+    })
     let similarProducts = result.map((product) => {
       product['product_images'] = product.images.map((image) => {
         return image.image_url
@@ -579,15 +587,21 @@ export class ProductService {
       return product
     })
 
-    const productIds = result.map((product) => {
-      return product.id
-    })
-
-    const variances = await this.productVarianceRepository.findBy({ product_id: In(productIds) })
-    variances.forEach((variance) => {
-      const productId = variance.product_id
-      const index = similarProducts.findIndex((product) => product.id === productId)
-      similarProducts[index]['prices'].push(variance.productPriceHistories[0].price)
+    result.forEach((product, pIndex) => {
+      let totalRatings = 0
+      let totalRatingsCount = 0
+      product.productVariances.forEach((variance, vIndex) => {
+        const reviews = variance.productVarianceReviews
+        totalRatings += reviews.reduce((prev, curr) => prev + curr.star, 0)
+        totalRatingsCount += reviews.length
+        similarProducts[pIndex]['prices'].push(variance.productPriceHistories[0].price)
+      })
+      similarProducts[pIndex]['average_rating'] = totalRatingsCount > 0 ? parseFloat((totalRatings / totalRatingsCount).toFixed(1)) : 0
+      similarProducts[pIndex]['total_ratings_count'] = totalRatingsCount
+      delete similarProducts[pIndex].productVariances
+      delete similarProducts[pIndex].attributeSet
+      delete similarProducts[pIndex].document
+      delete similarProducts[pIndex].description
     })
     return similarProducts
   }
