@@ -4,6 +4,7 @@ import CreateProductDTO from 'src/dtos/create-product.dto'
 import Category from 'src/entities/category.entity'
 import Product from 'src/entities/product.entity'
 import { DataSource, EntityManager, ILike, In, Like, Not, Repository, getManager } from 'typeorm'
+import { v4 as uuidv4 } from 'uuid'
 import { AttributeService } from '../attribute/attribute.service'
 import ProductVariance from 'src/entities/product-variance.entity'
 import ProductImage from 'src/entities/product-image.entity'
@@ -11,11 +12,14 @@ import ProductPriceHistory from 'src/entities/product-price-history.entity'
 import ProductVarianceImage from 'src/entities/product-variance-image.entity'
 import { removeDiacriticalMarks, slugGenerator } from 'src/utils/utils'
 import { CategoryService } from '../category/category.service'
-import { TPagingListResponse } from 'src/types/response.types'
+import { TPagingListResponse, TProductReview } from 'src/types/response.types'
 import Brand from 'src/entities/brand.entity'
 import { SearchService } from '../search/search.service'
 import Keyword from 'src/entities/keyword.entity'
 import Store from 'src/entities/store.entity'
+import ProductVarianceReview from 'src/entities/product-variance-review.entity'
+import ProductVarianceReviewImage from 'src/entities/product-variance-review-image.entity'
+import CreateProductVarianceReviewDTO from 'src/dtos/create-product-variance-review.dto'
 
 @Injectable()
 export class ProductService {
@@ -30,6 +34,8 @@ export class ProductService {
     @InjectRepository(Category) private categoryRepository: Repository<Category>,
     @InjectRepository(Keyword) private keywordRepository: Repository<Keyword>,
     @InjectRepository(Store) private storeRepository: Repository<Store>,
+    @InjectRepository(ProductVarianceReview) private productVarianceReviewRepository: Repository<ProductVarianceReview>,
+    @InjectRepository(ProductVarianceReviewImage) private productVarianceReviewImageRepository: Repository<ProductVarianceReviewImage>,
     @Inject(AttributeService) private attributeService: AttributeService,
     @Inject(CategoryService) private categoryService: CategoryService,
     @Inject(SearchService) private searchService: SearchService,
@@ -52,7 +58,7 @@ export class ProductService {
           `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`
         )
         .where(
-          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal) >= 0.5`
+          `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal) >= 0.65`
         )
         .orderBy(
           `((GREATEST (length(word),length('${kWord}')) - levenshtein("keyword"."word", '${kWord}')) / GREATEST (length(word),length('${kWord}'))::decimal)`,
@@ -72,9 +78,23 @@ export class ProductService {
   }
 
   async getProductDetails(slug: string): Promise<Product> {
-    const result = await this.productRepository.findOne({ where: { slug } })
-    if (!result) return null
-    const variances = await this.productVarianceRepository.find({ where: { product_id: result.id } })
+    const product = await this.productRepository.findOne({
+      where: { slug },
+      relations: {
+        productVariances: {
+          attributeSet: {
+            attributeSetValueMappings: {
+              attributeValue: {
+                attribute: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!product) return null
+
     let productVariance: {
       [key: string]: {
         [key: string]: {
@@ -85,7 +105,8 @@ export class ProductService {
         }
       }
     } = {}
-    variances.forEach((variance) => {
+
+    product.productVariances.forEach((variance) => {
       const price = variance.productPriceHistories.sort((a, b) => b.price - a.price)[0].price
       const qty = variance.quantity
       const attribute1 = variance.attributeSet.attributeSetValueMappings[0].attributeValue
@@ -112,10 +133,13 @@ export class ProductService {
         }
       }
     })
-    result['product_variance'] = productVariance
-    const categoryPath = await this.categoryService.getCategoryPath(result.category_id)
-    result['category_path'] = categoryPath
-    return result
+    product['product_variance'] = productVariance
+    delete product.productVariances
+    delete product.category.attributeSet
+    delete product.document
+    const categoryPath = await this.categoryService.getCategoryPath(product.category_id)
+    product['category_path'] = categoryPath
+    return product
   }
 
   async createProduct(createProductDTO: CreateProductDTO): Promise<Product> {
@@ -240,7 +264,13 @@ export class ProductService {
       }
     })
 
-    let baseQuery = this.productRepository.createQueryBuilder('product').select('product').leftJoinAndSelect('product.images', 'images')
+    let baseQuery = this.productRepository
+      .createQueryBuilder('product')
+      .select('product')
+      .leftJoinAndSelect('product.images', 'images')
+      .leftJoinAndSelect('product.productVariances', 'pv')
+      .leftJoinAndSelect('pv.productPriceHistories', 'pvph')
+      .innerJoinAndSelect('pv.productVarianceReviews', 'pvr')
 
     let whereQueries = ''
     let documentQryString = ''
@@ -257,8 +287,6 @@ export class ProductService {
       whereQueries += `document @@ to_tsquery('${documentQryString}')`
       baseQuery.addSelect(`ts_rank("product"."document", to_tsquery('${documentQryString}'))`, 'rank')
     }
-
-
 
     if (Object.keys(query).some((key) => key.includes('attribute_'))) {
       const attributeEntries = Object.entries(query).filter((entry) => entry[0].includes('attribute_'))
@@ -355,6 +383,7 @@ export class ProductService {
     } else {
       baseQuery.skip(0)
     }
+
     const result = await baseQuery.getMany()
     const total_page = Math.ceil(total / itemsPerPage)
     const current_page = parseInt(query['page'][0])
@@ -365,20 +394,21 @@ export class ProductService {
           return image.image_url
         })
         delete product.images
-        product['prices'] = []
+        let totalRatingsCount = 0
+        let totalRatings = 0
+        product['prices'] = product.productVariances.map((variance) => {
+          totalRatings += variance.productVarianceReviews.reduce((prev, curr) => prev + curr.star, 0)
+          totalRatingsCount += variance.productVarianceReviews.length
+          return variance.productPriceHistories[0].price
+        })
+        product['average_rating'] = parseFloat((totalRatings / totalRatingsCount).toFixed(1))
+        product['total_ratings_count'] = totalRatingsCount
+        delete product.productVariances
+        delete product.description
+        delete product.document
         return product
       })
 
-      const productIds = result.map((product) => {
-        return product.id
-      })
-
-      const variances = await this.productVarianceRepository.findBy({ product_id: In(productIds) })
-      variances.forEach((variance) => {
-        const productId = variance.product_id
-        const index = resultWithPrices.findIndex((product) => product.id === productId)
-        resultWithPrices[index]['prices'].push(variance.productPriceHistories[0].price)
-      })
       return {
         data: resultWithPrices,
         current_page: parseInt(query['page'][0]),
@@ -556,5 +586,100 @@ export class ProductService {
       similarProducts[index]['prices'].push(variance.productPriceHistories[0].price)
     })
     return similarProducts
+  }
+
+  async createProductVarianceReview(createProductVarianceReviewDTO: CreateProductVarianceReviewDTO, userId: string) {
+    const { comment, product_variance_id, star } = createProductVarianceReviewDTO
+    try {
+      let productVarianceReview: ProductVarianceReview = null
+      await this.datasource.manager.transaction('SERIALIZABLE', async (transactionalEntityManager) => {
+        const newProductVarianceReview = this.productVarianceReviewRepository.create({
+          product_variance_id,
+          comment,
+          star,
+          user_id: userId,
+        })
+        const createProductVarianceReviewRes = await transactionalEntityManager.save(newProductVarianceReview)
+        if (createProductVarianceReviewDTO.images && createProductVarianceReviewDTO.images.length > 0) {
+          const imagesArr = createProductVarianceReviewDTO.images.map((imageURL) => ({
+            product_review_id: createProductVarianceReviewRes.id,
+            image_url: imageURL,
+            id: uuidv4(),
+            createdAt: new Date(),
+          }))
+          const createProductVarianceReviewImagesRes = await this.datasource
+            .createQueryBuilder()
+            .insert()
+            .into(ProductVarianceReviewImage)
+            .values(imagesArr)
+            .orIgnore()
+            .execute()
+          productVarianceReview = createProductVarianceReviewRes
+        }
+      })
+      return productVarianceReview
+    } catch (err) {
+      console.log(err)
+      return null
+    }
+  }
+
+  async getProductReviews(queryParams: string): Promise<TPagingListResponse<TProductReview>> {
+    let query: { [key: string]: string[] } = {}
+    const itemsPerPage = 30
+    queryParams.split('&').forEach((item) => {
+      if (item.includes('=')) {
+        query[item.split('=')[0]] = item.split('=')[1].split(',')
+      }
+    })
+
+    const productId = query['id'][0]
+    const page = query['page'][0] ?? '0'
+    const total = await this.productVarianceReviewRepository
+      .createQueryBuilder('pvr')
+      .select('pvr')
+      .leftJoinAndSelect('pvr.productVariance', 'pv')
+      .leftJoin('pv.product', 'pd')
+      .where(`pd.id='${productId}'`)
+      .getCount()
+    const reviews = await this.productVarianceReviewRepository
+      .createQueryBuilder('pvr')
+      .select('pvr')
+      .leftJoinAndSelect('pvr.productVariance', 'pv')
+      .leftJoinAndSelect('pv.attributeSet', 'as')
+      .leftJoinAndSelect('as.attributeSetValueMappings', 'asvm')
+      .leftJoinAndSelect('asvm.attributeValue', 'av')
+      .leftJoin('pvr.user', 'user')
+      .addSelect(['user.username'])
+      .leftJoin('pv.product', 'pd')
+      .where(`pd.id='${productId}'`)
+      .take(itemsPerPage)
+      .skip(parseInt(page))
+      .getMany()
+    const formattedReviews: TProductReview[] = reviews.map((review) => {
+      return {
+        comment: review.comment,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+        id: review.id,
+        product_variance_id: review.product_variance_id,
+        star: review.star,
+        user_id: review.user_id,
+        username: review.user.username,
+        variance_values: [
+          review.productVariance.attributeSet.attributeSetValueMappings[0].attributeValue.value_string,
+          review.productVariance.attributeSet.attributeSetValueMappings[1].attributeValue.value_string,
+        ],
+      }
+    })
+    const total_page = Math.ceil(total / itemsPerPage)
+    const has_next = parseInt(page) + 1 < total_page
+    return {
+      current_page: parseInt(page),
+      data: formattedReviews,
+      has_next,
+      total,
+      total_page,
+    }
   }
 }

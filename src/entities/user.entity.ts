@@ -4,6 +4,7 @@ import UserShippingInfo from './user-shipping-info.entity'
 import Order from './order.entity'
 import { ApiProperty } from '@nestjs/swagger'
 import Checkout from './checkout.entity'
+import ProductVarianceReview from './product-variance-review.entity'
 
 @Entity()
 class User extends CustomBase {
@@ -25,6 +26,9 @@ class User extends CustomBase {
   @ApiProperty()
   @OneToMany(() => Checkout, (checkout) => checkout.user, { eager: true })
   checkouts: Checkout[]
+
+  @OneToMany(() => ProductVarianceReview, (productVarianceReview) => productVarianceReview.user)
+  productVarianceReviews: ProductVarianceReview[]
 }
 
 export default User

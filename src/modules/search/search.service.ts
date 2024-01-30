@@ -4,8 +4,6 @@ import { DataSource, EntityManager, Repository } from 'typeorm'
 import Keyword from 'src/entities/keyword.entity'
 import { v4 as uuidv4 } from 'uuid'
 import SearchTerm from 'src/entities/search-tearm.entity'
-
-@Global()
 @Injectable()
 export class SearchService {
   constructor(

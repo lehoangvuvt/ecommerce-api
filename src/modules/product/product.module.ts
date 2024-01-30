@@ -20,6 +20,9 @@ import Keyword from 'src/entities/keyword.entity'
 import { SearchService } from '../search/search.service'
 import SearchTerm from 'src/entities/search-tearm.entity'
 import Store from 'src/entities/store.entity'
+import { JwtModule } from '@nestjs/jwt'
+import ProductVarianceReview from 'src/entities/product-variance-review.entity'
+import ProductVarianceReviewImage from 'src/entities/product-variance-review-image.entity'
 
 @Module({
   controllers: [ProductController],
@@ -29,6 +32,8 @@ import Store from 'src/entities/store.entity'
       ProductImage,
       ProductVarianceImage,
       ProductPriceHistory,
+      ProductVarianceReview,
+      ProductVarianceReviewImage,
       Attribute,
       AttributeValue,
       AttributeSet,
@@ -39,8 +44,9 @@ import Store from 'src/entities/store.entity'
       Brand,
       Keyword,
       SearchTerm,
-      Store
+      Store,
     ]),
+    JwtModule.register({}),
   ],
   providers: [ProductService, AttributeService, CategoryService, SearchService],
 })

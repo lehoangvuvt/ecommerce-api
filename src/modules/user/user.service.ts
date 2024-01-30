@@ -9,6 +9,7 @@ import CartItem from 'src/entities/cart-item.entity'
 import AddToCartDTO from 'src/dtos/add-to-cart.dto'
 import Product from 'src/entities/product.entity'
 import RemoveFromCartDTO from 'src/dtos/remove-from-cart.dto'
+import { JwtService } from '@nestjs/jwt'
 
 @Injectable()
 export class UserService {
@@ -18,6 +19,7 @@ export class UserService {
     @InjectRepository(Cart) private cartRepository: Repository<Cart>,
     @InjectRepository(CartItem) private cartItemRepository: Repository<CartItem>,
     @InjectRepository(Product) private productRepository: Repository<Product>,
+    private readonly jwtService: JwtService
   ) {}
 
   async getAll(): Promise<Array<User>> {

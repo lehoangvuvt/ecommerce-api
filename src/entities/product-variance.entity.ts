@@ -7,15 +7,20 @@ import CartItem from './cart-item.entity'
 import OrderItem from './order-item.entity'
 import AttributeSet from './attribute-set.entity'
 import CheckoutItem from './checkout-item.entity'
+import { ApiProperty } from '@nestjs/swagger'
+import ProductVarianceReview from './product-variance-review.entity'
 
 @Entity()
 class ProductVariance extends CustomBase {
+  @ApiProperty()
   @Column({ type: 'varchar', nullable: false })
   product_id: string
 
+  @ApiProperty()
   @Column({ type: 'varchar', nullable: true })
   attribute_set_id: string
 
+  @ApiProperty()
   @Column({ type: 'int2', nullable: false, default: 0 })
   quantity: number
 
@@ -41,6 +46,9 @@ class ProductVariance extends CustomBase {
 
   @OneToOne(() => CheckoutItem, (checkoutItem) => checkoutItem.productVariance)
   checkoutItems: CheckoutItem[]
+
+  @OneToMany(() => ProductVarianceReview, (productVarianceReview) => productVarianceReview.productVariance)
+  productVarianceReviews: ProductVarianceReview[]
 }
 
 export default ProductVariance

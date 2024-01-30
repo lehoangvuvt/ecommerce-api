@@ -29,8 +29,6 @@ export type AttributeWithNumberValues = {
   value_type: 'number'
   values: number[]
 }
-
-@Global()
 @Injectable()
 export class CategoryService {
   constructor(

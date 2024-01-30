@@ -1,4 +1,4 @@
-import { Column, Entity, In, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import CustomBase from './base'
 import Category from './category.entity'
 import ProductVariance from './product-variance.entity'
@@ -48,7 +48,7 @@ class Product extends CustomBase {
   @JoinColumn({ name: 'category_id' })
   category: Category
 
-  @OneToMany(() => ProductVariance, (productVariance) => productVariance)
+  @OneToMany(() => ProductVariance, (productVariance) => productVariance.product)
   productVariances: ProductVariance[]
 
   @ManyToOne(() => Brand, (brand) => brand.products, { eager: true })

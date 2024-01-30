@@ -7,7 +7,6 @@ import User from 'src/entities/user.entity'
 import Cart from 'src/entities/cart.entity'
 import CartItem from 'src/entities/cart-item.entity'
 import Product from 'src/entities/product.entity'
-
 @Global()
 @Module({
   imports: [TypeOrmModule.forFeature([User, Cart, CartItem, Product]), JwtModule.register({})],

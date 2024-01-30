@@ -38,26 +38,35 @@ import { SearchModule } from './modules/search/search.module'
 import SearchTerm from './entities/search-tearm.entity'
 import Store from './entities/store.entity'
 import { StoreModule } from './modules/store/store.module'
+import { GeolocationModule } from './modules/geolocation/geolocation.module'
+import OrderInfo from './entities/order-info.entity'
+import { OrderModule } from './modules/order/order.module'
+import { TrackingModule } from './modules/tracking/tracking.module'
+import { SocketModule } from './socket/socket.module'
+import ProductVarianceReview from './entities/product-variance-review.entity'
+import ProductVarianceReviewImage from './entities/product-variance-review-image.entity'
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      // host: 'localhost',
-      // port: 5432,
-      // username: process.env.DATABASE_USERNAME,
-      // password: process.env.DATABASE_PASSWORD,
-      // database: 'ecommerce',
-      host: 'roundhouse.proxy.rlwy.net',
-      port: 45858,
-      username: 'postgres',
-      password: '2gbdf3DDddGB1gD33dCGbf51C5dd63-f',
-      database: 'railway',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      // host: 'roundhouse.proxy.rlwy.net',
+      // port: 45858,
+      // username: 'postgres',
+      // password: '2gbdf3DDddGB1gD33dCGbf51C5dd63-f',
+      // database: 'railway',
       entities: [
         User,
         UserInfo,
         UserShippingInfo,
         Order,
+        OrderInfo,
         OrderItem,
         Attribute,
         AttributeValue,
@@ -78,6 +87,8 @@ import { StoreModule } from './modules/store/store.module'
         Keyword,
         SearchTerm,
         Store,
+        ProductVarianceReview,
+        ProductVarianceReviewImage,
       ],
       synchronize: true,
     }),
@@ -91,9 +102,14 @@ import { StoreModule } from './modules/store/store.module'
     AuthModule,
     SearchModule,
     StoreModule,
+    GeolocationModule,
+    OrderModule,
+    TrackingModule,
+    SocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
+  exports: [UserModule],
 })
 export class AppModule {
   constructor(private datasource: DataSource) {}

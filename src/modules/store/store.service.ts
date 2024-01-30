@@ -3,8 +3,8 @@ import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 import Store from 'src/entities/store.entity'
 import CreateStoreDTO from 'src/dtos/create-store.dto'
+import ProductVarianceReview from 'src/entities/product-variance-review.entity'
 
-@Global()
 @Injectable()
 export class StoreService {
   constructor(
@@ -32,7 +32,18 @@ export class StoreService {
       }
     })
     store['category_tabs'] = categoryTabs
-    store['total_ratings_count'] = 300
+    const storeReviewStars = (await this.datasource.query(`
+        select pr.star from store st
+        INNER JOIN product pd
+        ON st.id = pd.store_id
+        INNER JOIN product_variance pv
+        ON pd.id = pv.product_id
+        INNER JOIN product_variance_review pr
+        ON pr.product_variance_id = pv.id
+        WHERE st.id=${store.id}
+    `)) as { star: number }[]
+    store['average_rating'] = (storeReviewStars.reduce((prev, curr) => prev + curr.star, 0) / storeReviewStars.length).toFixed(1)
+    store['total_ratings_count'] = storeReviewStars.length
     store['total_followers_count'] = 120
     delete store.products
     return store
