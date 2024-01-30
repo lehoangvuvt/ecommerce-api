@@ -270,7 +270,7 @@ export class ProductService {
       .leftJoinAndSelect('product.images', 'images')
       .leftJoinAndSelect('product.productVariances', 'pv')
       .leftJoinAndSelect('pv.productPriceHistories', 'pvph')
-      .innerJoinAndSelect('pv.productVarianceReviews', 'pvr')
+      .leftJoinAndSelect('pv.productVarianceReviews', 'pvr')
 
     let whereQueries = ''
     let documentQryString = ''
@@ -397,8 +397,12 @@ export class ProductService {
         let totalRatingsCount = 0
         let totalRatings = 0
         product['prices'] = product.productVariances.map((variance) => {
-          totalRatings += variance.productVarianceReviews.reduce((prev, curr) => prev + curr.star, 0)
-          totalRatingsCount += variance.productVarianceReviews.length
+          variance.productVarianceReviews.forEach((review) => {
+            if (review.star > 0) {
+              totalRatings += review.star
+            }
+            totalRatingsCount++
+          })
           return variance.productPriceHistories[0].price
         })
         product['average_rating'] = parseFloat((totalRatings / totalRatingsCount).toFixed(1))
