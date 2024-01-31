@@ -9,7 +9,7 @@ export default class MailService {
   constructor() {
     const rabbitMq = amqplib
     rabbitMq.connect(
-      `amqp://5Nz5MqvGXK4bQ3fC:qzAfB0~CF4AmOR1._d7epJ7bd-uB3flP@viaduct.proxy.rlwy.net:23801`,
+      `amqp://${process.env.RAMQ_USER}:${process.env.RAMQ_PASSWORD}@${process.env.RAMQ_DOMAIN}`,
       (connectError: any, connection: amqplib.Connection) => {
         if (connectError) {
           throw connectError
