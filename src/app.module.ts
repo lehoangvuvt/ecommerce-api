@@ -111,7 +111,7 @@ import { MailModule } from './modules/mail/mail.module'
   ],
   controllers: [AppController],
   providers: [AppService],
-  exports: [UserModule],
+  exports: [UserModule, MailModule],
 })
 export class AppModule {
   constructor(private datasource: DataSource) {}

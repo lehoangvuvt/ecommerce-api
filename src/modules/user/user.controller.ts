@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common'
 import { UserService } from './user.service'
 import { Response } from 'express'
 import { ApiBody, ApiCreatedResponse, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger'
@@ -10,6 +10,8 @@ import AddToCartDTO from 'src/dtos/add-to-cart.dto'
 import Cart from 'src/entities/cart.entity'
 import { TokenVerifyGuard } from '../auth/tokenVerify.guard'
 import RemoveFromCartDTO from 'src/dtos/remove-from-cart.dto'
+import LoginDTO from 'src/dtos/login.dto'
+import VerifyAccountDTO from 'src/dtos/verify-account.dto'
 
 @ApiTags('User')
 @Controller('users')
@@ -24,17 +26,17 @@ export class UserController {
 
   @ApiBody({ type: CreateUserDTO })
   @ApiCreatedResponse({ description: 'The record has been successfully created.', type: User })
-  @Post('/create')
-  async createUser(@Body() body: { username: string; password: string }, @Res() res: Response) {
-    const result = await this.service.create(body.username, body.password)
-    if (!result) return res.status(400).json({ error: 'Dup username' })
-    return res.status(201).json(result)
+  @Post('/sign-up')
+  async createUser(@Body() createUserDTO: CreateUserDTO, @Res() res: Response) {
+    const result = await this.service.create(createUserDTO)
+    if (!result) return res.status(400).json({ error: 'Username or email already existed' })
+    return res.status(201).json({ message: 'Sign up success!' })
   }
 
-  @ApiBody({ type: CreateUserDTO })
+  @ApiBody({ type: LoginDTO })
   @ApiResponse({ description: 'Login success', status: 200, type: User })
   @Post('login')
-  async login(@Body() loginDTO: CreateUserDTO, @Res() res: Response) {
+  async login(@Body() loginDTO: LoginDTO, @Res() res: Response) {
     const response = await this.service.login(loginDTO)
     if (response) {
       const refreshToken = await this.authService.signToken('refresh_token', { id: response.id })
@@ -129,5 +131,14 @@ export class UserController {
     res.clearCookie('access_token', { path: '/', sameSite: 'none', secure: true })
     res.clearCookie('refresh_token', { path: '/', sameSite: 'none', secure: true })
     return res.status(200).json({ message: 'Logout success' })
+  }
+
+  @ApiBody({ type: VerifyAccountDTO })
+  @Put('verify')
+  async verifyAccount(@Body() verifyAccountDTO: VerifyAccountDTO, @Res() res: Response) {
+    const response = await this.service.verifyAccount(verifyAccountDTO.verify_id)
+    if (response === -1) return res.status(404).json({ error: 'Wrong verify link' })
+    if (response === 0) return res.status(400).json({ error: 'Account already verified' })
+    return res.status(200).json({ message: 'Verify account successfully!' })
   }
 }

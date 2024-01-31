@@ -39,7 +39,7 @@ export default class MailService {
     )
   }
 
-  testTaskMailQueue(sendMailDTO: SendMailDTO) {
+  sendQueueTask_SendEmail(sendMailDTO: SendMailDTO) {
     try {
       return this.rabbitMqChannel.sendToQueue('task_send_mail', Buffer.from(JSON.stringify(sendMailDTO)), {
         persistent: true,

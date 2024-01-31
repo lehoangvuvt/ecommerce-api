@@ -12,8 +12,8 @@ export class MailController {
   @ApiBody({ type: SendMailDTO })
   @Post('send-email')
   async sendEmail(@Body() sendMailDTO: SendMailDTO, @Res() res: Response) {
-    const isSuccess = this.service.testTaskMailQueue(sendMailDTO)
-    if (!isSuccess) return res.status(400).json('Send email failed')
-    return res.status(200).json('Send email success')
+    const isSuccess = this.service.sendQueueTask_SendEmail(sendMailDTO)
+    if (!isSuccess) return res.status(400).json('Task send email failed')
+    return res.status(200).json('Task send email success')
   }
 }

@@ -16,6 +16,18 @@ class User extends CustomBase {
   password: string
 
   @ApiProperty()
+  @Column({ type: 'varchar', nullable: false, unique: true })
+  email: string
+
+  @ApiProperty()
+  @Column({ type: 'boolean', nullable: false, default: false })
+  is_active: boolean
+
+  @ApiProperty()
+  @Column({ type: 'varchar', nullable: false, unique: true })
+  verify_id: string
+
+  @ApiProperty()
   @OneToMany(() => UserShippingInfo, (userShippingInfo) => userShippingInfo.user, { eager: true })
   userShippingInfos: UserShippingInfo[]
 

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
+import shortid from 'shortid'
 import User from 'src/entities/user.entity'
 import { Repository, EntityManager } from 'typeorm'
 import { compareSync, hashSync } from 'bcrypt'
@@ -10,6 +11,9 @@ import AddToCartDTO from 'src/dtos/add-to-cart.dto'
 import Product from 'src/entities/product.entity'
 import RemoveFromCartDTO from 'src/dtos/remove-from-cart.dto'
 import { JwtService } from '@nestjs/jwt'
+import MailService from '../mail/mail.service'
+import LoginDTO from 'src/dtos/login.dto'
+import SendMailDTO from 'src/dtos/send-mail.dto'
 
 @Injectable()
 export class UserService {
@@ -19,6 +23,7 @@ export class UserService {
     @InjectRepository(Cart) private cartRepository: Repository<Cart>,
     @InjectRepository(CartItem) private cartItemRepository: Repository<CartItem>,
     @InjectRepository(Product) private productRepository: Repository<Product>,
+    @Inject(MailService) private mailService: MailService,
     private readonly jwtService: JwtService
   ) {}
 
@@ -27,19 +32,45 @@ export class UserService {
     return result
   }
 
-  async create(username: string, password: string): Promise<User> {
-    const checkExisted = await this.userRepository.findOne({ where: { username } })
-    const hashedPassword = hashSync(password, 10)
+  async create(createUserDTO: CreateUserDTO): Promise<User> {
+    const { username, email, password } = createUserDTO
+    const checkExisted = await this.userRepository.findOne({ where: [{ username }, { email }] })
     if (checkExisted) return null
+
+    const hashedPassword = hashSync(password, 10)
     const userRepository = this.userRepository.create({
       username,
       password: hashedPassword,
+      is_active: false,
+      email,
+      verify_id: shortid.generate(),
     })
     try {
-      const result = await userRepository.save()
-      return result
+      const newUserRes = await userRepository.save()
+      const sendMailDTO: SendMailDTO = {
+        htmlContent: `<h1>Click to this link: <a href='${process.env.CLIENT_HOST_URL}/verify/${newUserRes.verify_id}'>${process.env.CLIENT_HOST_URL}/verify/${newUserRes.verify_id}</a> to verify your account`,
+        subject: 'Verify Account',
+        to: newUserRes.email,
+      }
+      this.mailService.handleSendMail(sendMailDTO)
+      return newUserRes
     } catch (error) {
+      console.log(error)
       return null
+    }
+  }
+
+  async verifyAccount(verifyId: string): Promise<-1 | 0 | 1> {
+    try {
+      const user = await this.userRepository.findOne({ where: { verify_id: verifyId } })
+      if (!user) return -1
+      if (user.is_active) return 0
+      user.is_active = true
+      await user.save()
+      return 1
+    } catch (error) {
+      console.log('verifyAccount error: ' + error)
+      return -1
     }
   }
 
@@ -84,11 +115,11 @@ export class UserService {
     return formattedCartData
   }
 
-  async login(loginDTO: CreateUserDTO): Promise<User> {
-    let user = await this.userRepository.findOne({ where: { username: loginDTO.username } })
-
+  async login(loginDTO: LoginDTO): Promise<User> {
+    let user = await this.userRepository.findOne({ where: { username: loginDTO.username, is_active: true } })
     if (!user) return null
     const isPasswordValid = compareSync(loginDTO.password, user.password)
+    console.log(isPasswordValid)
     if (isPasswordValid) {
       const userCart = await this.cartRepository.findOne({ where: { user_id: user.id } })
       if (userCart) {

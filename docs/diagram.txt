@@ -130,6 +130,9 @@ Table user {
   updatedAt datetime
   username varchar
   password varchar
+  email varchar [unique]
+  verify_id varchar [unique]
+  is_active boolean
 }
 
 Table user_info {
