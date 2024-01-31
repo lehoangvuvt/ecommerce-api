@@ -45,6 +45,7 @@ import { TrackingModule } from './modules/tracking/tracking.module'
 import { SocketModule } from './socket/socket.module'
 import ProductVarianceReview from './entities/product-variance-review.entity'
 import ProductVarianceReviewImage from './entities/product-variance-review-image.entity'
+import { MailModule } from './modules/mail/mail.module'
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import ProductVarianceReviewImage from './entities/product-variance-review-image
     OrderModule,
     TrackingModule,
     SocketModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
