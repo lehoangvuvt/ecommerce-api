@@ -16,7 +16,7 @@ class User extends CustomBase {
   password: string
 
   @ApiProperty()
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   email: string
 
   @ApiProperty()
@@ -24,7 +24,7 @@ class User extends CustomBase {
   is_active: boolean
 
   @ApiProperty()
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   verify_id: string
 
   @ApiProperty()
