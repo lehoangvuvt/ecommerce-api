@@ -7,6 +7,7 @@ import OrderItem from 'src/entities/order-item.entity'
 import Order from 'src/entities/order.entity'
 import { DataSource, EntityManager, Repository } from 'typeorm'
 import { GeolocationService } from '../geolocation/geolocation.service'
+import RabbitMqService from 'src/services/rabbitmq.service'
 
 @Injectable()
 export class OrderService {
@@ -16,7 +17,7 @@ export class OrderService {
     @InjectRepository(OrderInfo) private orderInfoRepository: Repository<OrderInfo>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     @Inject(GeolocationService) private geolocationService: GeolocationService,
-    private datasource: DataSource
+    private datasource: DataSource,
   ) {}
 
   async getOrdersByUserId(userId: string): Promise<Order[]> {

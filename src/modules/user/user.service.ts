@@ -11,9 +11,9 @@ import AddToCartDTO from 'src/dtos/add-to-cart.dto'
 import Product from 'src/entities/product.entity'
 import RemoveFromCartDTO from 'src/dtos/remove-from-cart.dto'
 import { JwtService } from '@nestjs/jwt'
-import MailService from '../mail/mail.service'
 import LoginDTO from 'src/dtos/login.dto'
 import SendMailDTO from 'src/dtos/send-mail.dto'
+import MessageQueueService from '../message-queue/message-queue.service'
 
 @Injectable()
 export class UserService {
@@ -23,8 +23,8 @@ export class UserService {
     @InjectRepository(Cart) private cartRepository: Repository<Cart>,
     @InjectRepository(CartItem) private cartItemRepository: Repository<CartItem>,
     @InjectRepository(Product) private productRepository: Repository<Product>,
-    @Inject(MailService) private mailService: MailService,
-    private readonly jwtService: JwtService
+    @Inject(MessageQueueService) private messageQueueService: MessageQueueService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async getAll(): Promise<Array<User>> {
@@ -52,7 +52,7 @@ export class UserService {
         subject: 'Verify Account',
         to: newUserRes.email,
       }
-      this.mailService.handleSendMail(sendMailDTO)
+      this.messageQueueService.handleSendMail(sendMailDTO)
       return newUserRes
     } catch (error) {
       console.log(error)

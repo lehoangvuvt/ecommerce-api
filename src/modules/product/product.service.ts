@@ -80,20 +80,11 @@ export class ProductService {
   async getProductDetails(slug: string): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { slug },
-      relations: {
-        productVariances: {
-          attributeSet: {
-            attributeSetValueMappings: {
-              attributeValue: {
-                attribute: true,
-              },
-            },
-          },
-        },
-      },
     })
-
     if (!product) return null
+
+    const productVariances = await this.productVarianceRepository.find({ where: { product_id: product.id } })
+    product.productVariances = productVariances
 
     let productVariance: {
       [key: string]: {
@@ -386,7 +377,7 @@ export class ProductService {
 
     const result = await baseQuery.getMany()
     const total_page = Math.ceil(total / itemsPerPage)
-    const current_page = parseInt(query['page'][0])
+    const current_page = parseInt(query['page'] ? query['page'][0] : '0')
     const has_next = current_page + 1 < total_page
     if (result.length > 0) {
       let resultWithPrices = result.map((product) => {

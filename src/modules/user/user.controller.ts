@@ -96,7 +96,7 @@ export class UserController {
       const refresh_token = req.cookies['refresh_token']
       const validateToken = await this.authService.validateToken('refresh_token', refresh_token)
       if (!validateToken) return res.status(401).json({ error: 'Refresh token invalid' })
-      const accessToken = await this.authService.signToken('access_token', { _id: validateToken.id })
+      const accessToken = await this.authService.signToken('access_token', { id: validateToken.id })
       res.cookie('access_token', accessToken, tokenConfig.accessToken.cookieOptions)
       return res.status(200).json({ accessToken })
     } else {
@@ -117,7 +117,7 @@ export class UserController {
     const validateRfToken = await this.authService.validateToken('refresh_token', refreshToken)
     if (!validateRfToken) return res.status(401).json({ error: 'Authentication failed' })
 
-    const newAccessToken = await this.authService.signToken('access_token', { _id: validateRfToken.id })
+    const newAccessToken = await this.authService.signToken('access_token', { id: validateRfToken.id })
     res.cookie('access_token', newAccessToken, tokenConfig.accessToken.cookieOptions)
     return res.status(200).json({
       ...validateRfToken,

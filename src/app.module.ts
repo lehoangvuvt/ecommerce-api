@@ -45,7 +45,7 @@ import { TrackingModule } from './modules/tracking/tracking.module'
 import { SocketModule } from './socket/socket.module'
 import ProductVarianceReview from './entities/product-variance-review.entity'
 import ProductVarianceReviewImage from './entities/product-variance-review-image.entity'
-import { MailModule } from './modules/mail/mail.module'
+import { MessageQueueModule } from './modules/message-queue/message-queue.module'
 
 @Module({
   imports: [
@@ -107,11 +107,11 @@ import { MailModule } from './modules/mail/mail.module'
     OrderModule,
     TrackingModule,
     SocketModule,
-    MailModule,
+    MessageQueueModule,
   ],
   controllers: [AppController],
   providers: [AppService],
-  exports: [UserModule, MailModule],
+  exports: [UserModule, MessageQueueModule],
 })
 export class AppModule {
   constructor(private datasource: DataSource) {}
