@@ -57,11 +57,6 @@ import { MessageQueueModule } from './modules/message-queue/message-queue.module
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      // host: 'roundhouse.proxy.rlwy.net',
-      // port: 45858,
-      // username: 'postgres',
-      // password: '2gbdf3DDddGB1gD33dCGbf51C5dd63-f',
-      // database: 'railway',
       entities: [
         User,
         UserInfo,

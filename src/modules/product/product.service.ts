@@ -3,7 +3,7 @@ import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import CreateProductDTO from 'src/dtos/create-product.dto'
 import Category from 'src/entities/category.entity'
 import Product from 'src/entities/product.entity'
-import { DataSource, EntityManager, ILike, In, Like, Not, Repository, getManager } from 'typeorm'
+import { DataSource, EntityManager, In, Not, Repository } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 import { AttributeService } from '../attribute/attribute.service'
 import ProductVariance from 'src/entities/product-variance.entity'
@@ -561,22 +561,24 @@ export class ProductService {
     if (!product) return null
     const categoryId = product.category.id
     const result = await this.productRepository.find({
-      relations: {
-        productVariances: {
-          productVarianceReviews: true,
-        },
-      },
       where: { category_id: categoryId, id: Not(product.id) },
       take: 10,
     })
-    let similarProducts = result.map((product) => {
+    let similarProducts: Product[] = []
+    const getAllProductsVariances = result.map(async (product) => {
+      const productVariances = await this.productVarianceRepository.find({
+        where: { product_id: product.id },
+      })
       product['product_images'] = product.images.map((image) => {
         return image.image_url
       })
       delete product.images
       product['prices'] = []
-      return product
+      product.productVariances = productVariances
+      similarProducts.push(product)
     })
+
+    await Promise.all(getAllProductsVariances)
 
     result.forEach((product, pIndex) => {
       let totalRatings = 0

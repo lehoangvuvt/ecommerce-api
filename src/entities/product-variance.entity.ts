@@ -47,7 +47,7 @@ class ProductVariance extends CustomBase {
   @OneToOne(() => CheckoutItem, (checkoutItem) => checkoutItem.productVariance)
   checkoutItems: CheckoutItem[]
 
-  @OneToMany(() => ProductVarianceReview, (productVarianceReview) => productVarianceReview.productVariance)
+  @OneToMany(() => ProductVarianceReview, (productVarianceReview) => productVarianceReview.productVariance, { eager: true })
   productVarianceReviews: ProductVarianceReview[]
 }
 
