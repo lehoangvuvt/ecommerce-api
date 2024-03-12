@@ -434,7 +434,7 @@ export class ProductService {
     attributeEntries.forEach((entry) => {
       const short_id = entry[0]
       const whereQuery = `WHERE atr.short_id='${short_id}' AND atv.value_string`
-      let inValuesQuery = 'IN ('
+      let inValuesQuery = 'IN ('  
       entry[1].forEach((value) => {
         inValuesQuery += `'${value}',`
       })
