@@ -4,12 +4,11 @@ import { AppModule } from './app.module'
 import { ValidationPipe } from '@nestjs/common'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import express from 'express'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   app.use(cors({ credentials: true, origin: process.env.CLIENT_HOST_URL }))
-  app.use(cookieParser)
+  app.use(cookieParser())
   app.useGlobalPipes(new ValidationPipe())
   const config = new DocumentBuilder().setTitle('Ecommerce API').setDescription('API for ecommerce').setVersion('1.0').build()
   const document = SwaggerModule.createDocument(app, config)
